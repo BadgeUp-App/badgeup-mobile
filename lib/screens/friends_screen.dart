@@ -38,9 +38,9 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
         title: const Text('Comunidad'),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppTheme.primaryBlue,
+          labelColor: AppTheme.primaryOrange,
           unselectedLabelColor: Colors.grey[500],
-          indicatorColor: AppTheme.primaryBlue,
+          indicatorColor: AppTheme.primaryOrange,
           tabs: const [
             Tab(text: 'Comunidad'),
             Tab(text: 'Amigos'),
@@ -151,7 +151,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: [Color(0xFF60A5FA), Color(0xFFA78BFA)],
+                    colors: [AppTheme.primaryOrange, Color(0xFFEF4444)],
                   ),
                 ),
                 child: const Icon(Icons.person, size: 22, color: Colors.white),
@@ -200,7 +200,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Text(
@@ -208,7 +208,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryBlue,
+                      color: AppTheme.primaryOrange,
                     ),
                   ),
                 ),
@@ -239,7 +239,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue,
+                      color: AppTheme.primaryOrange,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Text(

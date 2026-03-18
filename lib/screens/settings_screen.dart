@@ -39,7 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: themeProvider.isDark,
               onChanged: (value) => themeProvider.toggleTheme(value),
-              activeThumbColor: AppTheme.primaryBlue,
+              activeThumbColor: AppTheme.primaryOrange,
             ),
           ),
           _settingsTile(
@@ -75,7 +75,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: _notificationsEnabled,
               onChanged: (value) => setState(() => _notificationsEnabled = value),
-              activeThumbColor: AppTheme.primaryBlue,
+              activeThumbColor: AppTheme.primaryOrange,
             ),
           ),
           _settingsTile(
@@ -85,7 +85,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: _soundEnabled,
               onChanged: (value) => setState(() => _soundEnabled = value),
-              activeThumbColor: AppTheme.primaryBlue,
+              activeThumbColor: AppTheme.primaryOrange,
             ),
           ),
           const SizedBox(height: 24),
@@ -97,7 +97,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: _gpsEnabled,
               onChanged: (value) => setState(() => _gpsEnabled = value),
-              activeThumbColor: AppTheme.primaryBlue,
+              activeThumbColor: AppTheme.primaryOrange,
             ),
           ),
           _settingsTile(
@@ -297,7 +297,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Icon(
               icon,
               size: 20,
-              color: isDestructive ? AppTheme.errorRed : AppTheme.primaryBlue,
+              color: isDestructive ? AppTheme.errorRed : AppTheme.primaryOrange,
             ),
             const SizedBox(width: 14),
             Expanded(

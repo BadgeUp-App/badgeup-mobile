@@ -4,6 +4,7 @@ import '../data/mock_data.dart';
 import '../models/album.dart';
 import '../theme/app_theme.dart';
 import 'album_detail_screen.dart';
+import 'create_sticker_screen.dart';
 
 class AlbumsScreen extends StatelessWidget {
   const AlbumsScreen({super.key});
@@ -17,10 +18,20 @@ class AlbumsScreen extends StatelessWidget {
         title: const Text('Albumes'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Text(
-              '${albums.length} registros',
-              style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+            padding: const EdgeInsets.only(right: 8),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CreateStickerScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text('+ Crear', style: TextStyle(fontSize: 13)),
             ),
           ),
         ],
@@ -139,9 +150,9 @@ class _AlbumListCard extends StatelessWidget {
                     lineHeight: 8,
                     percent: album.progress,
                     barRadius: const Radius.circular(4),
-                    backgroundColor: const Color(0xFFEFF6FF),
+                    backgroundColor: const Color(0xFFE5E7EB),
                     linearGradient: const LinearGradient(
-                      colors: [AppTheme.primaryBlue, AppTheme.primaryPurple],
+                      colors: [AppTheme.accentGreen, Color(0xFF34D399)],
                     ),
                   ),
                   const SizedBox(height: 8),

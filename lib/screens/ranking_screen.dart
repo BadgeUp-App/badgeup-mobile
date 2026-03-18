@@ -14,7 +14,7 @@ class RankingScreen extends StatelessWidget {
     return CustomScrollView(
       slivers: [
         SliverAppBar(
-          expandedHeight: 320,
+          expandedHeight: 340,
           pinned: true,
           backgroundColor: const Color(0xFFF59E0B),
           flexibleSpace: FlexibleSpaceBar(
@@ -71,20 +71,20 @@ class RankingScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       SizedBox(
-                        width: 28,
+                        width: 32,
                         child: Text(
                           '#${entry.rank}',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: Colors.grey[400],
+                            color: AppTheme.primaryOrange,
                           ),
                         ),
                       ),
                       const SizedBox(width: 12),
                       CircleAvatar(
-                        radius: 19,
+                        radius: 20,
                         backgroundColor: const Color(0xFFEFF6FF),
                         child: Icon(Icons.person, size: 20, color: Colors.grey[400]),
                       ),
@@ -95,7 +95,10 @@ class RankingScreen extends StatelessWidget {
                           children: [
                             Text(
                               entry.displayName,
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             Text(
                               '@${entry.username}',
@@ -105,11 +108,11 @@ class RankingScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${entry.points}',
+                        '${entry.points} pts',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryBlue,
+                          color: AppTheme.primaryOrange,
                         ),
                       ),
                     ],
@@ -129,25 +132,44 @@ class RankingScreen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _podiumColumn(top3[1], 100, const Color(0xFFC0C0C0)),
-        const SizedBox(width: 8),
-        _podiumColumn(top3[0], 140, const Color(0xFFFFD700)),
-        const SizedBox(width: 8),
-        _podiumColumn(top3[2], 70, const Color(0xFFCD7F32)),
+        _podiumColumn(top3[1], 100, const Color(0xFFC0C0C0), 2),
+        const SizedBox(width: 10),
+        _podiumColumn(top3[0], 140, const Color(0xFFFFD700), 1),
+        const SizedBox(width: 10),
+        _podiumColumn(top3[2], 70, const Color(0xFFCD7F32), 3),
       ],
     );
   }
 
-  Widget _podiumColumn(entry, double height, Color color) {
+  Widget _podiumColumn(entry, double height, Color color, int position) {
+    final avatarRadius = position == 1 ? 26.0 : 22.0;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CircleAvatar(
-          radius: 22,
-          backgroundColor: Colors.white.withValues(alpha: 0.3),
-          child: Icon(Icons.person, color: Colors.white.withValues(alpha: 0.8)),
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.4),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            radius: avatarRadius,
+            backgroundColor: Colors.white.withValues(alpha: 0.25),
+            child: Icon(
+              Icons.person,
+              size: avatarRadius,
+              color: Colors.white.withValues(alpha: 0.85),
+            ),
+          ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Text(
           entry.displayName,
           style: const TextStyle(
@@ -159,28 +181,31 @@ class RankingScreen extends StatelessWidget {
         ),
         Text(
           '${entry.points} pts',
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11),
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.85),
+            fontSize: 11,
+          ),
         ),
         const SizedBox(height: 8),
         Container(
-          width: 80,
+          width: 82,
           height: height,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [color, color.withValues(alpha: 0.7)],
+              colors: [color, color.withValues(alpha: 0.6)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
           ),
           child: Padding(
-            padding: const EdgeInsets.only(top: 10),
+            padding: const EdgeInsets.only(top: 12),
             child: Text(
               '#${entry.rank}',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.w900,
               ),
             ),

@@ -62,20 +62,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 80,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [AppTheme.primaryBlue, AppTheme.primaryPurple],
+                    colors: [Color(0xFFF97316), Color(0xFFEA580C)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                      color: AppTheme.primaryOrange.withValues(alpha: 0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
                   ],
                 ),
-                child: const Icon(Icons.directions_car, size: 40, color: Colors.white),
+                child: const Icon(Icons.emoji_events, size: 40, color: Colors.white),
               ),
               const SizedBox(height: 16),
               const Text(
@@ -84,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Colecciona stickers de carros en el mundo real',
+                'Colecciona, compite, conquista',
                 style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                 textAlign: TextAlign.center,
               ),
@@ -144,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Checkbox(
                           value: _rememberMe,
                           onChanged: (v) => setState(() => _rememberMe = v ?? false),
-                          activeColor: AppTheme.primaryBlue,
+                          activeColor: AppTheme.primaryOrange,
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -174,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Olvidaste tu contrasena?',
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppTheme.primaryBlue,
+                        color: AppTheme.primaryOrange,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -189,7 +189,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Text('Entrar'),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Text(
+                      'O CONTINUA CON',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[400],
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
+                ],
+              ),
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -231,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Registrate',
                       style: TextStyle(
                         fontSize: 13,
-                        color: AppTheme.primaryBlue,
+                        color: AppTheme.primaryOrange,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

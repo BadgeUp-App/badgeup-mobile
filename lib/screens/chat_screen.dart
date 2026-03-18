@@ -61,7 +61,7 @@ class _ChatScreenState extends State<ChatScreen> {
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: [Color(0xFF60A5FA), Color(0xFFA78BFA)],
+                  colors: [AppTheme.primaryOrange, Color(0xFFEF4444)],
                 ),
               ),
               child: const Icon(Icons.person, size: 16, color: Colors.white),
@@ -158,7 +158,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [AppTheme.primaryBlue, AppTheme.primaryPurple],
+                        colors: [AppTheme.primaryOrange, Color(0xFFEF4444)],
                       ),
                     ),
                     child: const Icon(Icons.send, size: 20, color: Colors.white),
@@ -184,7 +184,7 @@ class _ChatScreenState extends State<ChatScreen> {
         decoration: BoxDecoration(
           gradient: msg.isMe
               ? const LinearGradient(
-                  colors: [AppTheme.primaryBlue, AppTheme.primaryPurple],
+                  colors: [AppTheme.primaryOrange, Color(0xFFEF4444)],
                 )
               : null,
           color: msg.isMe ? null : Theme.of(context).cardTheme.color,

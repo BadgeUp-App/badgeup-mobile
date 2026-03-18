@@ -181,7 +181,7 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
-                          colors: [AppTheme.primaryBlue, AppTheme.primaryPurple],
+                          colors: [AppTheme.primaryOrange, Color(0xFFEF4444)],
                         ),
                       ),
                     ),

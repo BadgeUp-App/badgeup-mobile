@@ -3,6 +3,7 @@ import 'package:percent_indicator/percent_indicator.dart';
 import '../models/album.dart';
 import '../theme/app_theme.dart';
 import '../widgets/sticker_card.dart';
+import 'edit_album_screen.dart';
 import 'sticker_detail_screen.dart';
 
 class AlbumDetailScreen extends StatelessWidget {
@@ -18,16 +19,40 @@ class AlbumDetailScreen extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 200,
             pinned: true,
-            backgroundColor: AppTheme.primaryBlue,
+            backgroundColor: AppTheme.primaryOrange,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
               onPressed: () => Navigator.pop(context),
             ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => EditAlbumScreen(album: album)),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'Editar',
+                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppTheme.primaryBlue, AppTheme.primaryPurple],
+                    colors: [AppTheme.primaryOrange, Color(0xFFEF4444)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),

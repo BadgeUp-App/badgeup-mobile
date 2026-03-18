@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
 import 'albums_screen.dart';
-import 'capture_screen.dart';
+import 'map_screen.dart';
 import 'ranking_screen.dart';
 import 'profile_screen.dart';
 
@@ -19,7 +19,7 @@ class _MainShellState extends State<MainShell> {
   final _screens = const <Widget>[
     HomeScreen(),
     AlbumsScreen(),
-    CaptureScreen(),
+    MapScreen(),
     RankingScreen(),
     ProfileScreen(),
   ];
@@ -34,24 +34,17 @@ class _MainShellState extends State<MainShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
-          if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CaptureScreen()),
-            );
-            return;
-          }
           setState(() => _currentIndex = index);
         },
         destinations: [
           const NavigationDestination(
             icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
+            selectedIcon: Icon(Icons.home_rounded, color: AppTheme.primaryOrange),
             label: 'Inicio',
           ),
           const NavigationDestination(
             icon: Icon(Icons.collections_bookmark_outlined),
-            selectedIcon: Icon(Icons.collections_bookmark),
+            selectedIcon: Icon(Icons.collections_bookmark, color: AppTheme.primaryOrange),
             label: 'Albumes',
           ),
           NavigationDestination(
@@ -59,22 +52,32 @@ class _MainShellState extends State<MainShell> {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [AppTheme.primaryBlue, AppTheme.primaryPurple],
+                  colors: [AppTheme.primaryOrange, Color(0xFFEF4444)],
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 22),
+              child: const Icon(Icons.map_rounded, color: Colors.white, size: 22),
             ),
-            label: 'Captura',
+            selectedIcon: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppTheme.primaryOrange, Color(0xFFEF4444)],
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.map_rounded, color: Colors.white, size: 22),
+            ),
+            label: 'Mapa',
           ),
           const NavigationDestination(
             icon: Icon(Icons.leaderboard_outlined),
-            selectedIcon: Icon(Icons.leaderboard),
+            selectedIcon: Icon(Icons.leaderboard, color: AppTheme.primaryOrange),
             label: 'Ranking',
           ),
           const NavigationDestination(
             icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
+            selectedIcon: Icon(Icons.person, color: AppTheme.primaryOrange),
             label: 'Perfil',
           ),
         ],

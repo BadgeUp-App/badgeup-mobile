@@ -82,7 +82,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: const Color(0xFFFFF7ED),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Center(
@@ -91,7 +91,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryBlue,
+                              color: AppTheme.primaryOrange,
                             ),
                           ),
                         ),
@@ -210,7 +210,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: hasEvent ? FontWeight.w700 : FontWeight.w400,
-                    color: hasEvent ? AppTheme.primaryBlue : null,
+                    color: hasEvent ? AppTheme.primaryOrange : null,
                   ),
                 ),
                 if (hasEvent)
@@ -220,7 +220,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     height: 6,
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppTheme.primaryBlue,
+                      color: AppTheme.primaryOrange,
                     ),
                   ),
               ],
