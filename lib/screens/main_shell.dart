@@ -16,20 +16,32 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  final _screens = const <Widget>[
-    HomeScreen(),
-    AlbumsScreen(),
-    MapScreen(),
-    RankingScreen(),
-    ProfileScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+
+    final screens = <Widget>[
+      HomeScreen(
+        onProfileTapped: () {
+          setState(() => _currentIndex = 4); 
+        },
+        onRankingTapped: () { 
+          setState(() => _currentIndex = 3); 
+        },
+        onAlbumsTapped: () { 
+          setState(() => _currentIndex = 1); 
+        },
+      ),
+
+      const AlbumsScreen(),
+      const MapScreen(),
+      const RankingScreen(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _screens,
+        children: screens,
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
@@ -56,7 +68,7 @@ class _MainShellState extends State<MainShell> {
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.map_rounded, color: Colors.white, size: 22),
+              child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 22),
             ),
             selectedIcon: Container(
               padding: const EdgeInsets.all(10),
@@ -68,7 +80,7 @@ class _MainShellState extends State<MainShell> {
               ),
               child: const Icon(Icons.map_rounded, color: Colors.white, size: 22),
             ),
-            label: 'Mapa',
+            label: 'Cámara',
           ),
           const NavigationDestination(
             icon: Icon(Icons.leaderboard_outlined),

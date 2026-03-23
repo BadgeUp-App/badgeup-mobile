@@ -3,9 +3,19 @@ import 'package:percent_indicator/percent_indicator.dart';
 import '../data/mock_data.dart';
 import '../theme/app_theme.dart';
 import 'album_detail_screen.dart';
+import 'friends_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    super.key,
+    this.onProfileTapped,
+    this.onRankingTapped,
+    this.onAlbumsTapped,
+    });
+
+  final VoidCallback? onProfileTapped;
+  final VoidCallback? onRankingTapped;
+  final VoidCallback? onAlbumsTapped;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +46,7 @@ class HomeScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                 ),
                 GestureDetector(
-                  onTap: () {},
+                  onTap: onAlbumsTapped,
                   child: Text(
                     'Ver todos ->',
                     style: TextStyle(
@@ -111,15 +121,18 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: AppTheme.primaryOrange.withValues(alpha: 0.15),
-          child: Text(
-            user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              color: AppTheme.primaryOrange,
-              fontSize: 16,
+        GestureDetector(
+          onTap: onProfileTapped,
+          child: CircleAvatar(
+            radius: 20,
+            backgroundColor: AppTheme.primaryOrange.withValues(alpha: 0.15),
+            child: Text(
+              user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primaryOrange,
+                fontSize: 16,
+              ),
             ),
           ),
         ),
@@ -238,6 +251,7 @@ class HomeScreen extends StatelessWidget {
             label: 'Ranking',
             cardColor: cardColor,
             subtextColor: subtextColor,
+            onTap: onRankingTapped,
           ),
         ),
         const SizedBox(width: 12),
@@ -251,6 +265,12 @@ class HomeScreen extends StatelessWidget {
             label: 'Amigos',
             cardColor: cardColor,
             subtextColor: subtextColor,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FriendsScreen()),
+              );
+            },
           ),
         ),
       ],
@@ -266,46 +286,51 @@ class HomeScreen extends StatelessWidget {
     required String label,
     required Color cardColor,
     Color? subtextColor,
+    VoidCallback? onTap,
+
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 2),
             ),
-            child: Icon(icon, size: 22, color: iconColor),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(12),
               ),
-              Text(
-                label,
-                style: TextStyle(fontSize: 12, color: subtextColor),
-              ),
-            ],
-          ),
-        ],
+              child: Icon(icon, size: 22, color: iconColor),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                ),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 12, color: subtextColor),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
