@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
 class CaptureScreen extends StatefulWidget {
@@ -30,15 +31,20 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Capturar Sticker'),
-        content: const Text(
+        backgroundColor: AppTheme.surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: Text('Capturar sticker',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
+        content: Text(
           'Aqui se activara la camara para tomar una foto del sticker y se validara con IA + GPS. Funcionalidad pendiente.',
+          style: GoogleFonts.inter(color: AppTheme.onSurfaceVariant),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Entendido'),
+            child: Text('Entendido',
+                style: GoogleFonts.inter(
+                    color: AppTheme.primary, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -48,7 +54,7 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF0C0E12),
       body: SafeArea(
         child: Stack(
           children: [
@@ -63,13 +69,10 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
                         width: 260,
                         height: 200,
                         decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.white.withValues(
-                              alpha: 0.3 + (_pulseController.value * 0.3),
-                            ),
-                            width: 2,
+                          color: Colors.white.withValues(
+                            alpha: 0.04 + (_pulseController.value * 0.05),
                           ),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         child: child,
                       );
@@ -80,24 +83,25 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
                         Icon(
                           Icons.camera_alt_outlined,
                           size: 48,
-                          color: Colors.white.withValues(alpha: 0.6),
+                          color: Colors.white.withValues(alpha: 0.65),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         Text(
                           'Apunta al sticker',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
+                          style: GoogleFonts.inter(
+                            color: Colors.white.withValues(alpha: 0.7),
                             fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   Text(
                     'Camara no disponible en prototipo',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.4),
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withValues(alpha: 0.45),
                       fontSize: 12,
                     ),
                   ),
@@ -105,54 +109,43 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
               ),
             ),
             Positioned(
-              top: 8,
+              top: 12,
               left: 16,
               child: GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.arrow_back_ios_new, size: 14, color: Colors.white),
-                      SizedBox(width: 4),
-                      Text(
-                        'Cerrar',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: const Icon(Icons.close_rounded,
+                      size: 22, color: Colors.white),
                 ),
               ),
             ),
             Positioned(
-              top: 8,
+              top: 12,
               right: 16,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.location_on, size: 14, color: Color(0xFF4ADE80)),
-                    SizedBox(width: 4),
+                    const Icon(Icons.location_on_rounded,
+                        size: 14, color: AppTheme.tertiaryContainer),
+                    const SizedBox(width: 6),
                     Text(
                       'GPS activo',
-                      style: TextStyle(
-                        color: Color(0xFF4ADE80),
+                      style: GoogleFonts.inter(
+                        color: AppTheme.tertiaryContainer,
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -160,30 +153,27 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
               ),
             ),
             Positioned(
-              bottom: 40,
+              bottom: 44,
               left: 0,
               right: 0,
               child: Center(
                 child: GestureDetector(
                   onTap: _onCapture,
                   child: Container(
-                    width: 72,
-                    height: 72,
+                    width: 76,
+                    height: 76,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 4,
-                      ),
+                      color: Colors.white.withValues(alpha: 0.12),
                     ),
                     child: Container(
-                      margin: const EdgeInsets.all(4),
+                      margin: const EdgeInsets.all(6),
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [AppTheme.primaryOrange, Color(0xFFEF4444)],
-                        ),
+                        color: AppTheme.pastelPeach,
                       ),
+                      child: const Icon(Icons.camera_rounded,
+                          color: AppTheme.onPastelPeach, size: 28),
                     ),
                   ),
                 ),

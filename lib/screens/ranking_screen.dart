@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../data/mock_data.dart';
 import '../theme/app_theme.dart';
 
@@ -11,202 +13,345 @@ class RankingScreen extends StatelessWidget {
     final top3 = ranking.take(3).toList();
     final rest = ranking.skip(3).toList();
 
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          expandedHeight: 340,
-          pinned: true,
-          backgroundColor: const Color(0xFFF59E0B),
-          flexibleSpace: FlexibleSpaceBar(
-            background: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Ranking Global',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (top3.length >= 3) _buildPodium(top3),
-                    ],
+    return Scaffold(
+      backgroundColor: AppTheme.surface,
+      body: Stack(
+        children: [
+          Positioned(
+            top: -140,
+            right: -120,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 90, sigmaY: 90),
+                child: Container(
+                  width: 320,
+                  height: 320,
+                  decoration: BoxDecoration(
+                    color: AppTheme.secondaryContainer.withValues(alpha: 0.45),
+                    shape: BoxShape.circle,
                   ),
                 ),
               ),
             ),
           ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.all(20),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final entry = rest[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardTheme.color,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 8,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 32,
-                        child: Text(
-                          '#${entry.rank}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.primaryOrange,
+          SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceContainerLowest,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: AppTheme.subtleLift,
+                          ),
+                          child: Icon(Icons.emoji_events_rounded,
+                              color: AppTheme.onSurface, size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Ranking global',
+                          style: GoogleFonts.inter(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                            color: AppTheme.onSurface,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: const Color(0xFFEFF6FF),
-                        child: Icon(Icons.person, size: 20, color: Colors.grey[400]),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              entry.displayName,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            Text(
-                              '@${entry.username}',
-                              style: TextStyle(fontSize: 11, color: Colors.grey[400]),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        '${entry.points} pts',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryOrange,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                );
-              },
-              childCount: rest.length,
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'TEMPORADA ACTUAL',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.6,
+                            color: AppTheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Los mejores cazadores',
+                          style: GoogleFonts.inter(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -1,
+                            color: AppTheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                    child: _PodiumCard(top3: top3),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 14),
+                    child: Text(
+                      'Clasificacion',
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
+                        color: AppTheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final entry = rest[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 36,
+                                child: Text(
+                                  '#${entry.rank}',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.onSurfaceVariant,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Container(
+                                width: 42,
+                                height: 42,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppTheme.secondaryContainer,
+                                      AppTheme.pastelPeach,
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    entry.displayName.isNotEmpty
+                                        ? entry.displayName[0].toUpperCase()
+                                        : '?',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppTheme.onSurface,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      entry.displayName,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.onSurface,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '@${entry.username}',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11,
+                                        color: AppTheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                '${entry.points} pts',
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primary,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      childCount: rest.length,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PodiumCard extends StatelessWidget {
+  const _PodiumCard({required this.top3});
+  final List top3;
+
+  @override
+  Widget build(BuildContext context) {
+    if (top3.length < 3) return const SizedBox();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFF6D9FF),
+              Color(0xFFFFD8C4),
+              Color(0xFFE0F7FA),
+            ],
+          ),
+          borderRadius: BorderRadius.all(Radius.circular(28)),
         ),
-      ],
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _PodiumColumn(
+              entry: top3[1],
+              height: 100,
+              accent: AppTheme.surfaceContainerHigh,
+              position: 2,
+            ),
+            _PodiumColumn(
+              entry: top3[0],
+              height: 140,
+              accent: AppTheme.pastelPeach,
+              position: 1,
+            ),
+            _PodiumColumn(
+              entry: top3[2],
+              height: 74,
+              accent: AppTheme.secondaryContainer,
+              position: 3,
+            ),
+          ],
+        ),
+      ),
     );
   }
+}
 
-  Widget _buildPodium(List top3) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        _podiumColumn(top3[1], 100, const Color(0xFFC0C0C0), 2),
-        const SizedBox(width: 10),
-        _podiumColumn(top3[0], 140, const Color(0xFFFFD700), 1),
-        const SizedBox(width: 10),
-        _podiumColumn(top3[2], 70, const Color(0xFFCD7F32), 3),
-      ],
-    );
-  }
+class _PodiumColumn extends StatelessWidget {
+  const _PodiumColumn({
+    required this.entry,
+    required this.height,
+    required this.accent,
+    required this.position,
+  });
 
-  Widget _podiumColumn(entry, double height, Color color, int position) {
-    final avatarRadius = position == 1 ? 26.0 : 22.0;
+  final dynamic entry;
+  final double height;
+  final Color accent;
+  final int position;
 
+  @override
+  Widget build(BuildContext context) {
+    final avatarSize = position == 1 ? 60.0 : 50.0;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
+          width: avatarSize,
+          height: avatarSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: color, width: 3),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.4),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            color: AppTheme.surfaceContainerLowest,
+            boxShadow: AppTheme.subtleLift,
           ),
-          child: CircleAvatar(
-            radius: avatarRadius,
-            backgroundColor: Colors.white.withValues(alpha: 0.25),
-            child: Icon(
-              Icons.person,
-              size: avatarRadius,
-              color: Colors.white.withValues(alpha: 0.85),
+          child: Center(
+            child: Text(
+              entry.displayName.isNotEmpty
+                  ? entry.displayName[0].toUpperCase()
+                  : '?',
+              style: GoogleFonts.inter(
+                fontSize: position == 1 ? 22 : 18,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.onSurface,
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Text(
           entry.displayName,
-          style: const TextStyle(
-            color: Colors.white,
+          style: GoogleFonts.inter(
             fontSize: 12,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.onSurface,
+            letterSpacing: -0.2,
           ),
           overflow: TextOverflow.ellipsis,
         ),
+        const SizedBox(height: 2),
         Text(
           '${entry.points} pts',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.85),
+          style: GoogleFonts.inter(
             fontSize: 11,
+            color: AppTheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Container(
-          width: 82,
+          width: 76,
           height: height,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [color, color.withValues(alpha: 0.6)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            color: accent,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
           ),
           child: Padding(
-            padding: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.only(top: 14),
             child: Text(
-              '#${entry.rank}',
+              '$position',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 22,
+              style: GoogleFonts.inter(
+                fontSize: 26,
                 fontWeight: FontWeight.w900,
+                color: AppTheme.onSurface,
+                letterSpacing: -0.8,
               ),
             ),
           ),

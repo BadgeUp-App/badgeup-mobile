@@ -26,6 +26,10 @@ class BadgeUpApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeProvider.themeMode,
+      builder: (context, child) {
+        AppTheme.syncBrightness(Theme.of(context).brightness);
+        return child ?? const SizedBox.shrink();
+      },
       home: const LoginScreen(),
     );
   }

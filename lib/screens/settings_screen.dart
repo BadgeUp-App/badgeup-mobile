@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../theme/theme_provider.dart';
 import '../theme/app_theme.dart';
@@ -21,233 +22,253 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Ajustes'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _sectionTitle('Apariencia'),
-          _settingsTile(
-            context,
-            icon: Icons.dark_mode_outlined,
-            label: 'Modo oscuro',
-            trailing: Switch(
-              value: themeProvider.isDark,
-              onChanged: (value) => themeProvider.toggleTheme(value),
-              activeThumbColor: AppTheme.primaryOrange,
-            ),
-          ),
-          _settingsTile(
-            context,
-            icon: Icons.language,
-            label: 'Idioma',
-            trailing: DropdownButton<String>(
-              value: _language,
-              underline: const SizedBox(),
-              items: ['Espanol', 'English'].map((l) {
-                return DropdownMenuItem(value: l, child: Text(l, style: const TextStyle(fontSize: 13)));
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _language = value);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Idioma cambiado a $value'),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      backgroundColor: AppTheme.surface,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(24, 18, 24, 60),
+          children: [
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceContainerLowest,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: AppTheme.subtleLift,
                     ),
-                  );
-                }
+                    child: Icon(Icons.arrow_back_ios_new_rounded,
+                        size: 18, color: AppTheme.onSurface),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Ajustes',
+                  style: GoogleFonts.inter(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                    color: AppTheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+            Text(
+              'Preferencias',
+              style: GoogleFonts.inter(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.9,
+                color: AppTheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 28),
+            _sectionTitle('Apariencia'),
+            _settingsTile(
+              context,
+              icon: Icons.dark_mode_outlined,
+              label: 'Modo oscuro',
+              trailing: Switch(
+                value: themeProvider.isDark,
+                onChanged: (value) => themeProvider.toggleTheme(value),
+                activeThumbColor: AppTheme.primaryContainer,
+              ),
+            ),
+            _settingsTile(
+              context,
+              icon: Icons.language_rounded,
+              label: 'Idioma',
+              trailing: DropdownButton<String>(
+                value: _language,
+                underline: const SizedBox(),
+                style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AppTheme.onSurface,
+                    fontWeight: FontWeight.w600),
+                items: ['Espanol', 'English'].map((l) {
+                  return DropdownMenuItem(value: l, child: Text(l));
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _language = value);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Idioma cambiado a $value'),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+            _sectionTitle('Notificaciones'),
+            _settingsTile(
+              context,
+              icon: Icons.notifications_outlined,
+              label: 'Notificaciones push',
+              trailing: Switch(
+                value: _notificationsEnabled,
+                onChanged: (value) => setState(() => _notificationsEnabled = value),
+                activeThumbColor: AppTheme.primaryContainer,
+              ),
+            ),
+            _settingsTile(
+              context,
+              icon: Icons.volume_up_outlined,
+              label: 'Sonidos',
+              trailing: Switch(
+                value: _soundEnabled,
+                onChanged: (value) => setState(() => _soundEnabled = value),
+                activeThumbColor: AppTheme.primaryContainer,
+              ),
+            ),
+            const SizedBox(height: 24),
+            _sectionTitle('Privacidad'),
+            _settingsTile(
+              context,
+              icon: Icons.location_on_outlined,
+              label: 'Compartir ubicacion GPS',
+              trailing: Switch(
+                value: _gpsEnabled,
+                onChanged: (value) => setState(() => _gpsEnabled = value),
+                activeThumbColor: AppTheme.primaryContainer,
+              ),
+            ),
+            _settingsTile(
+              context,
+              icon: Icons.visibility_outlined,
+              label: 'Perfil visible',
+              onTap: () => _infoDialog(
+                context,
+                'Visibilidad del perfil',
+                'Aqui se configurara la visibilidad del perfil para otros usuarios. Funcionalidad pendiente.',
+              ),
+            ),
+            const SizedBox(height: 24),
+            _sectionTitle('Cuenta'),
+            _settingsTile(
+              context,
+              icon: Icons.person_outline_rounded,
+              label: 'Editar perfil',
+              onTap: () => _infoDialog(
+                context,
+                'Editar perfil',
+                'Se abrira el editor de perfil para cambiar nombre, foto y biografia. Funcionalidad pendiente.',
+              ),
+            ),
+            _settingsTile(
+              context,
+              icon: Icons.lock_outline_rounded,
+              label: 'Cambiar contrasena',
+              onTap: () => _infoDialog(
+                context,
+                'Cambiar contrasena',
+                'Se abrira el formulario para cambiar la contrasena. Funcionalidad pendiente.',
+              ),
+            ),
+            _settingsTile(
+              context,
+              icon: Icons.delete_outline_rounded,
+              label: 'Eliminar cuenta',
+              isDestructive: true,
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    backgroundColor: AppTheme.surfaceContainerLowest,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28)),
+                    title: Text('Eliminar cuenta',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
+                    content: Text(
+                      'Se eliminara la cuenta de forma permanente. Esta accion no se puede deshacer. Funcionalidad pendiente.',
+                      style: GoogleFonts.inter(color: AppTheme.onSurfaceVariant),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancelar',
+                            style: GoogleFonts.inter(
+                                color: AppTheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w700)),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Eliminar',
+                            style: GoogleFonts.inter(
+                                color: AppTheme.error,
+                                fontWeight: FontWeight.w800)),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
-          ),
-          const SizedBox(height: 24),
-          _sectionTitle('Notificaciones'),
-          _settingsTile(
-            context,
-            icon: Icons.notifications_outlined,
-            label: 'Notificaciones push',
-            trailing: Switch(
-              value: _notificationsEnabled,
-              onChanged: (value) => setState(() => _notificationsEnabled = value),
-              activeThumbColor: AppTheme.primaryOrange,
+            const SizedBox(height: 24),
+            _sectionTitle('Informacion'),
+            _settingsTile(
+              context,
+              icon: Icons.info_outline_rounded,
+              label: 'Acerca de BadgeUp',
+              onTap: () {
+                showAboutDialog(
+                  context: context,
+                  applicationName: 'BadgeUp',
+                  applicationVersion: '1.0.0',
+                  applicationLegalese: 'Colecciona stickers de carros en el mundo real.',
+                );
+              },
             ),
-          ),
-          _settingsTile(
-            context,
-            icon: Icons.volume_up_outlined,
-            label: 'Sonidos',
-            trailing: Switch(
-              value: _soundEnabled,
-              onChanged: (value) => setState(() => _soundEnabled = value),
-              activeThumbColor: AppTheme.primaryOrange,
+            _settingsTile(
+              context,
+              icon: Icons.description_outlined,
+              label: 'Terminos y condiciones',
+              onTap: () => _infoDialog(
+                context,
+                'Terminos y condiciones',
+                'Se mostraran los terminos y condiciones del servicio. Funcionalidad pendiente.',
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          _sectionTitle('Privacidad'),
-          _settingsTile(
-            context,
-            icon: Icons.location_on_outlined,
-            label: 'Compartir ubicacion GPS',
-            trailing: Switch(
-              value: _gpsEnabled,
-              onChanged: (value) => setState(() => _gpsEnabled = value),
-              activeThumbColor: AppTheme.primaryOrange,
+            const SizedBox(height: 32),
+            Center(
+              child: Text(
+                'BadgeUp v1.0.0',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: AppTheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _infoDialog(BuildContext context, String title, String body) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppTheme.surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: Text(title,
+            style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
+        content: Text(body,
+            style: GoogleFonts.inter(color: AppTheme.onSurfaceVariant)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Entendido',
+                style: GoogleFonts.inter(
+                    color: AppTheme.primary, fontWeight: FontWeight.w700)),
           ),
-          _settingsTile(
-            context,
-            icon: Icons.visibility_outlined,
-            label: 'Perfil visible',
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  title: const Text('Visibilidad del perfil'),
-                  content: const Text(
-                    'Aqui se configurara la visibilidad del perfil para otros usuarios. Funcionalidad pendiente.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Entendido'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-          _sectionTitle('Cuenta'),
-          _settingsTile(
-            context,
-            icon: Icons.person_outline,
-            label: 'Editar perfil',
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  title: const Text('Editar perfil'),
-                  content: const Text(
-                    'Se abrira el editor de perfil para cambiar nombre, foto y biografia. Funcionalidad pendiente.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Entendido'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          _settingsTile(
-            context,
-            icon: Icons.lock_outline,
-            label: 'Cambiar contrasena',
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  title: const Text('Cambiar contrasena'),
-                  content: const Text(
-                    'Se abrira el formulario para cambiar la contrasena. Funcionalidad pendiente.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Entendido'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          _settingsTile(
-            context,
-            icon: Icons.delete_outline,
-            label: 'Eliminar cuenta',
-            isDestructive: true,
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  title: const Text('Eliminar cuenta'),
-                  content: const Text(
-                    'Se eliminara la cuenta de forma permanente. Esta accion no se puede deshacer. Funcionalidad pendiente.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancelar'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        'Eliminar',
-                        style: TextStyle(color: AppTheme.errorRed),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-          _sectionTitle('Informacion'),
-          _settingsTile(
-            context,
-            icon: Icons.info_outline,
-            label: 'Acerca de BadgeUp',
-            onTap: () {
-              showAboutDialog(
-                context: context,
-                applicationName: 'BadgeUp',
-                applicationVersion: '1.0.0',
-                applicationLegalese: 'Colecciona stickers de carros en el mundo real.',
-              );
-            },
-          ),
-          _settingsTile(
-            context,
-            icon: Icons.description_outlined,
-            label: 'Terminos y condiciones',
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  title: const Text('Terminos y condiciones'),
-                  content: const Text(
-                    'Se mostraran los terminos y condiciones del servicio. Funcionalidad pendiente.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Entendido'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 40),
-          Center(
-            child: Text(
-              'BadgeUp v1.0.0',
-              style: TextStyle(fontSize: 12, color: Colors.grey[400]),
-            ),
-          ),
-          const SizedBox(height: 20),
         ],
       ),
     );
@@ -255,14 +276,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _sectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(left: 4, bottom: 10),
       child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: Colors.grey[500],
-          letterSpacing: 0.5,
+        title.toUpperCase(),
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: AppTheme.onSurfaceVariant,
+          letterSpacing: 1.4,
         ),
       ),
     );
@@ -276,43 +297,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
     VoidCallback? onTap,
     bool isDestructive = false,
   }) {
+    final color = isDestructive ? AppTheme.error : AppTheme.onSurface;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 1),
-            ),
-          ],
+          color: AppTheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(18),
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isDestructive ? AppTheme.errorRed : AppTheme.primaryOrange,
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: isDestructive
+                    ? AppTheme.pastelPeach
+                    : AppTheme.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: isDestructive ? AppTheme.onPastelPeach : AppTheme.primary,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isDestructive ? AppTheme.errorRed : null,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                  letterSpacing: -0.2,
                 ),
               ),
             ),
             if (trailing != null) trailing,
             if (trailing == null)
-              Icon(Icons.chevron_right, size: 20, color: Colors.grey[300]),
+              Icon(Icons.chevron_right_rounded,
+                  size: 20, color: AppTheme.onSurfaceVariant),
           ],
         ),
       ),

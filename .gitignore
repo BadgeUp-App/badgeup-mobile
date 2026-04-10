@@ -33,6 +33,9 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Generated screenshots from integration test
+/screenshots/
+
 # Symbolication related
 app.*.symbols
 

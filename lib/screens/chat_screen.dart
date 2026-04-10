@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -48,181 +49,243 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
+      backgroundColor: AppTheme.surface,
+      body: SafeArea(
+        child: Column(
           children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [AppTheme.primaryOrange, Color(0xFFEF4444)],
-                ),
-              ),
-              child: const Icon(Icons.person, size: 16, color: Colors.white),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'fer admn',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                ),
-                Text(
-                  'En linea',
-                  style: TextStyle(fontSize: 11, color: AppTheme.accentGreen),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[index];
-                return _buildBubble(msg);
-              },
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              border: Border(
-                top: BorderSide(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF334155)
-                      : const Color(0xFFF1F5F9),
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.attach_file, color: Colors.grey),
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        title: const Text('Adjuntar archivo'),
-                        content: const Text(
-                          'Aqui se podra adjuntar imagenes o archivos al chat. Funcionalidad pendiente.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Entendido'),
-                          ),
-                        ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 18, 24, 14),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceContainerLowest,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: AppTheme.subtleLift,
                       ),
-                    );
-                  },
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Escribe un mensaje...',
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
+                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                          size: 18, color: AppTheme.onSurface),
                     ),
-                    onSubmitted: (_) => _sendMessage(),
                   ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _sendMessage,
-                  child: Container(
-                    width: 44,
-                    height: 44,
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 40,
+                    height: 40,
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [AppTheme.primaryOrange, Color(0xFFEF4444)],
+                        colors: [
+                          AppTheme.secondaryContainer,
+                          AppTheme.pastelPeach,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
                     ),
-                    child: const Icon(Icons.send, size: 20, color: Colors.white),
+                    child: Center(
+                      child: Text(
+                        'F',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.onSurface,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'fer admn',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.onSurface,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppTheme.tertiary,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'En linea',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: AppTheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                itemCount: _messages.length,
+                itemBuilder: (context, index) {
+                  final msg = _messages[index];
+                  return _buildBubble(msg);
+                },
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          backgroundColor: AppTheme.surfaceContainerLowest,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28)),
+                          title: Text('Adjuntar archivo',
+                              style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w800)),
+                          content: Text(
+                            'Aqui se podra adjuntar imagenes o archivos al chat. Funcionalidad pendiente.',
+                            style: GoogleFonts.inter(
+                                color: AppTheme.onSurfaceVariant),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: Text('Entendido',
+                                  style: GoogleFonts.inter(
+                                      color: AppTheme.primary,
+                                      fontWeight: FontWeight.w700)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(Icons.attach_file_rounded,
+                          size: 20, color: AppTheme.onSurfaceVariant),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: TextField(
+                        controller: _messageController,
+                        style: GoogleFonts.inter(
+                            fontSize: 14, color: AppTheme.onSurface),
+                        decoration: InputDecoration(
+                          hintText: 'Escribe un mensaje...',
+                          hintStyle: GoogleFonts.inter(
+                              color: AppTheme.onSurfaceVariant, fontSize: 13),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          filled: false,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
+                        onSubmitted: (_) => _sendMessage(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  GestureDetector(
+                    onTap: _sendMessage,
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.pastelPeach,
+                        boxShadow: AppTheme.subtleLift,
+                      ),
+                      child: const Icon(Icons.send_rounded,
+                          size: 20, color: AppTheme.onPastelPeach),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildBubble(_ChatMessage msg) {
+    final bg = msg.isMe ? AppTheme.pastelPeach : AppTheme.surfaceContainerLow;
+    final fg = msg.isMe ? AppTheme.onPastelPeach : AppTheme.onSurface;
     return Align(
       alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
+        margin: const EdgeInsets.only(bottom: 10),
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          gradient: msg.isMe
-              ? const LinearGradient(
-                  colors: [AppTheme.primaryOrange, Color(0xFFEF4444)],
-                )
-              : null,
-          color: msg.isMe ? null : Theme.of(context).cardTheme.color,
+          color: bg,
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(msg.isMe ? 16 : 4),
-            bottomRight: Radius.circular(msg.isMe ? 4 : 16),
+            topLeft: const Radius.circular(20),
+            topRight: const Radius.circular(20),
+            bottomLeft: Radius.circular(msg.isMe ? 20 : 6),
+            bottomRight: Radius.circular(msg.isMe ? 6 : 20),
           ),
-          boxShadow: msg.isMe
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
               msg.text,
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 14,
-                color: msg.isMe ? Colors.white : null,
+                color: fg,
                 height: 1.4,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               msg.time,
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 10,
+                fontWeight: FontWeight.w600,
                 color: msg.isMe
-                    ? Colors.white.withValues(alpha: 0.6)
-                    : Colors.grey[400],
+                    ? AppTheme.onPastelPeach.withValues(alpha: 0.6)
+                    : AppTheme.onSurfaceVariant,
               ),
             ),
           ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/album.dart';
 import '../theme/app_theme.dart';
 
@@ -43,15 +44,20 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Cambiar portada'),
-        content: const Text(
+        backgroundColor: AppTheme.surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: Text('Cambiar portada',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
+        content: Text(
           'Se abrira la galeria para seleccionar una nueva portada. Funcionalidad pendiente.',
+          style: GoogleFonts.inter(color: AppTheme.onSurfaceVariant),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Entendido'),
+            child: Text('Entendido',
+                style: GoogleFonts.inter(
+                    color: AppTheme.primary, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -64,7 +70,7 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
         SnackBar(
           content: const Text('El titulo es obligatorio'),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       );
       return;
@@ -72,10 +78,13 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Guardar cambios'),
-        content: const Text(
+        backgroundColor: AppTheme.surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: Text('Guardar cambios',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
+        content: Text(
           'Los cambios del album se guardaran en el servidor. Funcionalidad pendiente.',
+          style: GoogleFonts.inter(color: AppTheme.onSurfaceVariant),
         ),
         actions: [
           TextButton(
@@ -83,7 +92,9 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: const Text('Entendido'),
+            child: Text('Entendido',
+                style: GoogleFonts.inter(
+                    color: AppTheme.primary, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -93,200 +104,234 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Editar album'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Titulo *',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.primaryOrange),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(hintText: 'Nombre del album'),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Tema',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.primaryOrange),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _themeController,
-              decoration: const InputDecoration(hintText: 'Tema del album'),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Descripcion',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.primaryOrange),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _descController,
-              maxLines: 3,
-              decoration: const InputDecoration(hintText: 'Descripcion del album...'),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _isPremium = !_isPremium),
+      backgroundColor: AppTheme.surface,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 18, 24, 40),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).inputDecorationTheme.fillColor,
+                        color: AppTheme.surfaceContainerLowest,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppTheme.darkBorder
-                              : const Color(0xFFE5E7EB),
-                          width: 1.5,
-                        ),
+                        boxShadow: AppTheme.subtleLift,
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              color: _isPremium ? AppTheme.primaryOrange : Colors.transparent,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: _isPremium ? AppTheme.primaryOrange : Colors.grey[400]!,
-                                width: 2,
+                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                          size: 18, color: AppTheme.onSurface),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Editar album',
+                    style: GoogleFonts.inter(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                      color: AppTheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              Text(
+                'Editar',
+                style: GoogleFonts.inter(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.9,
+                  color: AppTheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 28),
+              _label('Titulo *'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _titleController,
+                style: GoogleFonts.inter(color: AppTheme.onSurface),
+                decoration: const InputDecoration(hintText: 'Nombre del album'),
+              ),
+              const SizedBox(height: 20),
+              _label('Tema'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _themeController,
+                style: GoogleFonts.inter(color: AppTheme.onSurface),
+                decoration: const InputDecoration(hintText: 'Tema del album'),
+              ),
+              const SizedBox(height: 20),
+              _label('Descripcion'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _descController,
+                maxLines: 3,
+                style: GoogleFonts.inter(color: AppTheme.onSurface),
+                decoration: const InputDecoration(hintText: 'Descripcion del album...'),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _isPremium = !_isPremium),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 18),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: _isPremium
+                                    ? AppTheme.pastelPeach
+                                    : AppTheme.surfaceContainerHigh,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: _isPremium
+                                  ? const Icon(Icons.check_rounded,
+                                      size: 16, color: AppTheme.onPastelPeach)
+                                  : null,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Premium',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.onSurface,
                               ),
                             ),
-                            child: _isPremium
-                                ? const Icon(Icons.check, size: 16, color: Colors.white)
-                                : null,
-                          ),
-                          const SizedBox(width: 10),
-                          const Text('Premium', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _priceController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(hintText: '0.00'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            GestureDetector(
-              onTap: _selectCover,
-              child: Container(
-                height: 140,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: CustomPaint(
-                  painter: _DashedBorderPainter(
-                    color: Colors.grey.withValues(alpha: 0.4),
-                    borderRadius: 16,
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.image_outlined, size: 40, color: Colors.grey[400]),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Cambiar portada (opcional)',
-                          style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-                        ),
-                      ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _priceController,
+                      keyboardType: TextInputType.number,
+                      style: GoogleFonts.inter(color: AppTheme.onSurface),
+                      decoration: const InputDecoration(hintText: '0.00'),
                     ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              GestureDetector(
+                onTap: _selectCover,
+                child: Container(
+                  height: 160,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppTheme.surfaceContainerLowest,
+                        ),
+                        child: const Icon(Icons.image_outlined,
+                            size: 24, color: AppTheme.primary),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Cambiar portada (opcional)',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 32),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      side: BorderSide(color: Colors.grey[300]!, width: 1.5),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Cancelar',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                    child: const Text('Cancelar', style: TextStyle(fontWeight: FontWeight.w700)),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton(
-                    onPressed: _saveChanges,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accentGreen,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: GestureDetector(
+                      onTap: _saveChanges,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        decoration: BoxDecoration(
+                          color: AppTheme.pastelPeach,
+                          borderRadius: BorderRadius.circular(999),
+                          boxShadow: AppTheme.subtleLift,
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Guardar cambios',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.onPastelPeach,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                    child: const Text('Guardar cambios'),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-class _DashedBorderPainter extends CustomPainter {
-  final Color color;
-  final double borderRadius;
-
-  _DashedBorderPainter({required this.color, required this.borderRadius});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        Radius.circular(borderRadius),
-      ));
-
-    const dashWidth = 8.0;
-    const dashSpace = 5.0;
-    final metrics = path.computeMetrics();
-    for (final metric in metrics) {
-      double distance = 0;
-      while (distance < metric.length) {
-        final end = distance + dashWidth;
-        canvas.drawPath(
-          metric.extractPath(distance, end.clamp(0, metric.length)),
-          paint,
-        );
-        distance = end + dashSpace;
-      }
-    }
+  Widget _label(String text) {
+    return Text(
+      text,
+      style: GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        color: AppTheme.onSurfaceVariant,
+        letterSpacing: 0.4,
+      ),
+    );
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

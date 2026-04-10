@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -32,93 +33,159 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Calendario'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Explora tus stickers desbloqueados por dia',
-              style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-            ),
-            const SizedBox(height: 20),
-            _buildMonthSelector(),
-            const SizedBox(height: 16),
-            _buildDayHeaders(),
-            const SizedBox(height: 8),
-            _buildCalendarGrid(),
-            const SizedBox(height: 24),
-            if (_events.isNotEmpty) ...[
-              const Text(
-                'Capturas este mes',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 12),
-              ..._events.entries.map((entry) {
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardTheme.color,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 6,
-                        offset: const Offset(0, 1),
+      backgroundColor: AppTheme.surface,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 18, 24, 120),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceContainerLowest,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: AppTheme.subtleLift,
                       ),
-                    ],
+                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                          size: 18, color: AppTheme.onSurface),
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF7ED),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${entry.key}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryOrange,
+                  const SizedBox(width: 12),
+                  Text(
+                    'Calendario',
+                    style: GoogleFonts.inter(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                      color: AppTheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              Text(
+                'TU ACTIVIDAD',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.6,
+                  color: AppTheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Agenda de capturas',
+                style: GoogleFonts.inter(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.9,
+                  color: AppTheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Explora tus stickers desbloqueados por dia',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppTheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  children: [
+                    _buildMonthSelector(),
+                    const SizedBox(height: 14),
+                    _buildDayHeaders(),
+                    const SizedBox(height: 6),
+                    _buildCalendarGrid(),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 28),
+              if (_events.isNotEmpty) ...[
+                Text(
+                  'Capturas este mes',
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.4,
+                    color: AppTheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                ..._events.entries.map((entry) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: AppTheme.pastelPeach,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${entry.key}',
+                              style: GoogleFonts.inter(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.onPastelPeach,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              entry.value,
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                            ),
-                            Text(
-                              'Album: carros',
-                              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
-                            ),
-                          ],
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                entry.value,
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Album: carros',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: AppTheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const Icon(Icons.check_circle, size: 18, color: Color(0xFF10B981)),
-                    ],
-                  ),
-                );
-              }),
+                        const Icon(Icons.check_circle_rounded,
+                            size: 20, color: AppTheme.tertiary),
+                      ],
+                    ),
+                  );
+                }),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -132,17 +199,40 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        IconButton(
-          icon: const Icon(Icons.chevron_left),
-          onPressed: _previousMonth,
+        GestureDetector(
+          onTap: _previousMonth,
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.chevron_left_rounded,
+                size: 20, color: AppTheme.onSurface),
+          ),
         ),
         Text(
           '${months[_currentMonth.month - 1]} ${_currentMonth.year}',
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+            color: AppTheme.onSurface,
+          ),
         ),
-        IconButton(
-          icon: const Icon(Icons.chevron_right),
-          onPressed: _nextMonth,
+        GestureDetector(
+          onTap: _nextMonth,
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.chevron_right_rounded,
+                size: 20, color: AppTheme.onSurface),
+          ),
         ),
       ],
     );
@@ -156,10 +246,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
           child: Center(
             child: Text(
               d,
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Colors.grey[400],
+                fontWeight: FontWeight.w800,
+                color: AppTheme.onSurfaceVariant,
+                letterSpacing: 0.4,
               ),
             ),
           ),
@@ -190,37 +281,39 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       content: Text('${_events[day]} capturado el dia $day'),
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                   );
                 }
               : null,
           child: Container(
-            margin: const EdgeInsets.all(2),
+            margin: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: hasEvent ? const Color(0xFFEFF6FF) : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
+              color: hasEvent ? AppTheme.pastelPeach : Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   '$day',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
-                    fontWeight: hasEvent ? FontWeight.w700 : FontWeight.w400,
-                    color: hasEvent ? AppTheme.primaryOrange : null,
+                    fontWeight: hasEvent ? FontWeight.w800 : FontWeight.w500,
+                    color: hasEvent
+                        ? AppTheme.onPastelPeach
+                        : AppTheme.onSurface,
                   ),
                 ),
                 if (hasEvent)
                   Container(
                     margin: const EdgeInsets.only(top: 2),
-                    width: 6,
-                    height: 6,
+                    width: 5,
+                    height: 5,
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppTheme.primaryOrange,
+                      color: AppTheme.onPastelPeach,
                     ),
                   ),
               ],

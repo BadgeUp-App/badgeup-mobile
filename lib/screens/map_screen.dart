@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
 class MapScreen extends StatelessWidget {
@@ -7,90 +8,150 @@ class MapScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mapa de Capturas'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Explora donde se han capturado stickers.\nAqui tambien se van a capturar las imagenes de los carros',
-              style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-            ),
-            Text(
-              'Funcionalidad por implementar',
-              style: TextStyle(fontSize: 13, color: const Color.fromARGB(255, 106, 105, 105)),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              height: 360,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFDBEAFE), Color(0xFFE0E7FF), Color(0xFFD1FAE5)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+      backgroundColor: AppTheme.surface,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 18, 24, 120),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceContainerLowest,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: AppTheme.subtleLift,
+                      ),
+                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                          size: 18, color: AppTheme.onSurface),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Mapa de capturas',
+                    style: GoogleFonts.inter(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                      color: AppTheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              Text(
+                'EXPLORA',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.6,
+                  color: AppTheme.onSurfaceVariant,
                 ),
               ),
-              child: Stack(
-                children: [
-                  _mapPin(left: 60, top: 80, label: 'LA'),
-                  _mapPin(left: 110, top: 130, label: 'MX'),
-                  _mapPin(left: 210, top: 70, label: 'EU'),
-                  _mapPin(left: 280, top: 110, label: 'IN'),
-                  _mapPin(left: 190, top: 170, label: 'AF'),
-                  _mapPin(left: 170, top: 240, label: 'BR'),
-                  Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
+              const SizedBox(height: 6),
+              Text(
+                'Donde capturaste',
+                style: GoogleFonts.inter(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.9,
+                  color: AppTheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Explora donde se han capturado stickers. Aqui tambien se van a capturar las imagenes de los carros. Funcionalidad por implementar.',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppTheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: Container(
+                  height: 360,
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Color(0xFFE0F7FA),
+                        Color(0xFFF6D9FF),
+                        Color(0xFFFFD8C4),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      _mapPin(left: 60, top: 80, label: 'LA'),
+                      _mapPin(left: 110, top: 130, label: 'MX'),
+                      _mapPin(left: 210, top: 70, label: 'EU'),
+                      _mapPin(left: 280, top: 110, label: 'IN'),
+                      _mapPin(left: 190, top: 170, label: 'AF'),
+                      _mapPin(left: 170, top: 240, label: 'BR'),
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            borderRadius: BorderRadius.circular(16),
+                            color: AppTheme.surfaceContainerLowest.withValues(alpha: 0.88),
+                            borderRadius: BorderRadius.circular(22),
                           ),
                           child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.map, size: 32, color: Colors.grey[400]),
+                              Icon(Icons.map_rounded,
+                                  size: 32, color: AppTheme.onSurfaceVariant),
                               const SizedBox(height: 8),
-                              const Text(
+                              Text(
                                 'Mapa interactivo',
-                                style: TextStyle(
+                                style: GoogleFonts.inter(
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF374151),
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 'Se integrara Google Maps.\nFuncionalidad pendiente.',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: AppTheme.onSurfaceVariant,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Capturas recientes',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 12),
-            _captureItem(context, 'Porsche 911 GT3', 'Tonala, Jalisco', '30/11/2025'),
-            _captureItem(context, 'Audi R8 2020', 'Tlaquepaque, Jalisco', '03/12/2025'),
-            _captureItem(context, 'Charger SRT Hellcat', 'Zapopan, Jalisco', '01/12/2025'),
-            _captureItem(context, 'Ford Mustang GT', 'Zapopan, Jalisco', '28/11/2025'),
-          ],
+              const SizedBox(height: 28),
+              Text(
+                'Capturas recientes',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.4,
+                  color: AppTheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 14),
+              _captureItem(context, 'Porsche 911 GT3', 'Tonala, Jalisco', '30/11/2025'),
+              _captureItem(context, 'Audi R8 2020', 'Tlaquepaque, Jalisco', '03/12/2025'),
+              _captureItem(context, 'Charger SRT Hellcat', 'Zapopan, Jalisco', '01/12/2025'),
+              _captureItem(context, 'Ford Mustang GT', 'Zapopan, Jalisco', '28/11/2025'),
+            ],
+          ),
         ),
       ),
     );
@@ -104,33 +165,31 @@ class MapScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(4),
+              color: AppTheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               label,
-              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700),
+              style: GoogleFonts.inter(
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.onSurface,
+              ),
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Container(
             width: 28,
             height: 28,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.errorRed,
-              border: Border.all(color: Colors.white, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.errorRed.withValues(alpha: 0.4),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: AppTheme.pastelPeach,
+              boxShadow: AppTheme.subtleLift,
             ),
-            child: const Icon(Icons.directions_car, size: 14, color: Colors.white),
+            child: const Icon(Icons.directions_car_rounded,
+                size: 14, color: AppTheme.onPastelPeach),
           ),
         ],
       ),
@@ -139,33 +198,56 @@ class MapScreen extends StatelessWidget {
 
   Widget _captureItem(BuildContext context, String name, String location, String date) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        color: AppTheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         children: [
-          const Icon(Icons.location_on, size: 18, color: AppTheme.errorRed),
-          const SizedBox(width: 10),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppTheme.secondaryContainer,
+            ),
+            child: const Icon(Icons.location_on_rounded,
+                size: 18, color: AppTheme.onSecondaryContainer),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                Text(location, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                Text(
+                  name,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  location,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: AppTheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ),
-          Text(date, style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+          Text(
+            date,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              color: AppTheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
