@@ -8,10 +8,6 @@ class MapScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: const Text('Mapa de Capturas'),
       ),
       body: SingleChildScrollView(
@@ -20,8 +16,12 @@ class MapScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Explora donde se han capturado stickers',
+              'Explora donde se han capturado stickers.\nAqui tambien se van a capturar las imagenes de los carros',
               style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+            ),
+            Text(
+              'Funcionalidad por implementar',
+              style: TextStyle(fontSize: 13, color: const Color.fromARGB(255, 106, 105, 105)),
             ),
             const SizedBox(height: 16),
             Container(
