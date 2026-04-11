@@ -9,6 +9,7 @@ import '../services/auth_service.dart';
 import '../services/content_api.dart';
 import '../services/user_session.dart';
 import '../theme/app_theme.dart';
+import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
 import 'friends_screen.dart';
 import 'ranking_screen.dart';
@@ -87,6 +88,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const Spacer(),
                           GestureDetector(
+                            onTap: () async {
+                              final updated = await Navigator.push<bool>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const EditProfileScreen(),
+                                ),
+                              );
+                              if (updated == true) _reload();
+                            },
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surfaceContainerLowest,
+                                borderRadius: BorderRadius.circular(14),
+                                boxShadow: AppTheme.subtleLift,
+                              ),
+                              child: Icon(Icons.edit_outlined,
+                                  size: 20, color: AppTheme.onSurface),
+                            ),
+                          ),
+                          GestureDetector(
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(builder: (_) => const SettingsScreen()),
@@ -113,7 +137,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: CircularProgressIndicator(),
                       )
                     else ...[
-                      _AvatarBlock(user: user),
+                      _AvatarBlock(
+                        user: user,
+                        onTap: () async {
+                          final updated = await Navigator.push<bool>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const EditProfileScreen(),
+                            ),
+                          );
+                          if (updated == true) _reload();
+                        },
+                      ),
                       const SizedBox(height: 24),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -418,47 +453,107 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class _AvatarBlock extends StatelessWidget {
-  const _AvatarBlock({required this.user});
+  const _AvatarBlock({required this.user, required this.onTap});
   final UserProfile user;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final initial = user.displayName.isNotEmpty
         ? user.displayName[0].toUpperCase()
         : '?';
+    final hasAvatar =
+        user.avatarUrl != null && user.avatarUrl!.isNotEmpty;
     return Column(
       children: [
-        Container(
-          width: 116,
-          height: 116,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.pastelPeach,
-                AppTheme.secondaryContainer,
-              ],
-            ),
-            boxShadow: AppTheme.softShadow,
-          ),
-          padding: const EdgeInsets.all(6),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceContainerLowest,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                initial,
-                style: GoogleFonts.inter(
-                  fontSize: 44,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.onSurface,
+        GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 116,
+                height: 116,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppTheme.pastelPeach,
+                      AppTheme.secondaryContainer,
+                    ],
+                  ),
+                  boxShadow: AppTheme.softShadow,
+                ),
+                padding: const EdgeInsets.all(6),
+                child: ClipOval(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceContainerLowest,
+                      shape: BoxShape.circle,
+                    ),
+                    child: hasAvatar
+                        ? CachedNetworkImage(
+                            imageUrl: user.avatarUrl!,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => const Center(
+                              child: SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                            errorWidget: (_, __, ___) => Center(
+                              child: Text(
+                                initial,
+                                style: GoogleFonts.inter(
+                                  fontSize: 44,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Text(
+                              initial,
+                              style: GoogleFonts.inter(
+                                fontSize: 44,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.onSurface,
+                              ),
+                            ),
+                          ),
+                  ),
                 ),
               ),
-            ),
+              Positioned(
+                bottom: 2,
+                right: 2,
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.pastelPeach,
+                    boxShadow: AppTheme.subtleLift,
+                    border: Border.all(
+                      color: AppTheme.surface,
+                      width: 3,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt_rounded,
+                    size: 16,
+                    color: AppTheme.onPastelPeach,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),

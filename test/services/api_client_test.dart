@@ -27,7 +27,7 @@ void main() {
     test('GET returns decoded JSON and sends bearer token', () async {
       http.Request? captured;
       ApiClient.debugClient = MockClient((req) async {
-        captured = req as http.Request;
+        captured = req;
         return http.Response(
           jsonEncode({'ok': true, 'value': 42}),
           200,

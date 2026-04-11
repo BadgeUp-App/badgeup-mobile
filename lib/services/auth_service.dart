@@ -159,12 +159,14 @@ class AuthService {
     String? email,
     String? bio,
     File? avatar,
+    bool resetAvatar = false,
   }) async {
     final fields = <String, String>{
       if (firstName != null) 'first_name': firstName,
       if (lastName != null) 'last_name': lastName,
       if (email != null) 'email': email,
       if (bio != null) 'bio': bio,
+      if (resetAvatar) 'reset_avatar': 'true',
     };
     final files = <String, File>{
       if (avatar != null) 'avatar': avatar,

@@ -60,6 +60,14 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>BadgeUp necesita acceso a tus fotos para que puedas elegir una imagen de perfil o subir capturas de tus stickers.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>BadgeUp necesita la camara para que puedas tomar fotos de tus stickers y actualizar tu foto de perfil.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>BadgeUp guarda capturas de stickers en tu galeria.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>BadgeUp usa tu ubicacion para registrar donde capturas cada sticker.</string>
 	<key>GIDClientID</key>
 	<string>57071208513-3luqnrt2f62inlou4kvaft5v3paekvjq.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>

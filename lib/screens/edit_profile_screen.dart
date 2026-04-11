@@ -24,6 +24,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _picker = ImagePicker();
   File? _newAvatar;
   String? _currentAvatarUrl;
+  bool _removeAvatar = false;
 
   bool _loading = true;
   bool _saving = false;
@@ -63,17 +64,124 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _selectAvatar() async {
+    final hasPhoto = _newAvatar != null ||
+        (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty && !_removeAvatar);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppTheme.surfaceContainerLowest,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: AppTheme.onSurfaceVariant.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              Text(
+                'Cambiar foto de perfil',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                  color: AppTheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _sheetOption(
+                ctx,
+                icon: Icons.camera_alt_rounded,
+                label: 'Tomar foto',
+                value: 'camera',
+              ),
+              _sheetOption(
+                ctx,
+                icon: Icons.photo_library_rounded,
+                label: 'Elegir de la galeria',
+                value: 'gallery',
+              ),
+              if (hasPhoto)
+                _sheetOption(
+                  ctx,
+                  icon: Icons.delete_outline_rounded,
+                  label: 'Quitar foto',
+                  value: 'remove',
+                  destructive: true,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (choice == null) return;
+
+    if (choice == 'remove') {
+      setState(() {
+        _newAvatar = null;
+        _removeAvatar = true;
+      });
+      return;
+    }
+
     try {
       final picked = await _picker.pickImage(
-        source: ImageSource.gallery,
+        source: choice == 'camera' ? ImageSource.camera : ImageSource.gallery,
         maxWidth: 1200,
         maxHeight: 1200,
         imageQuality: 85,
       );
-      if (picked != null) setState(() => _newAvatar = File(picked.path));
+      if (picked != null) {
+        setState(() {
+          _newAvatar = File(picked.path);
+          _removeAvatar = false;
+        });
+      }
     } catch (e) {
-      _snack('No se pudo abrir la galeria: $e');
+      _snack('No se pudo abrir la ${choice == 'camera' ? 'camara' : 'galeria'}: $e');
     }
+  }
+
+  Widget _sheetOption(
+    BuildContext ctx, {
+    required IconData icon,
+    required String label,
+    required String value,
+    bool destructive = false,
+  }) {
+    final color = destructive ? AppTheme.error : AppTheme.onSurface;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => Navigator.pop(ctx, value),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(width: 16),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _save() async {
@@ -89,6 +197,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         email: _emailController.text.trim(),
         bio: _bioController.text.trim(),
         avatar: _newAvatar,
+        resetAvatar: _removeAvatar && _newAvatar == null,
       );
       if (!mounted) return;
       _snack('Perfil actualizado');
@@ -175,7 +284,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                         image: FileImage(_newAvatar!),
                                         fit: BoxFit.cover,
                                       )
-                                    : (_currentAvatarUrl != null &&
+                                    : (!_removeAvatar &&
+                                            _currentAvatarUrl != null &&
                                             _currentAvatarUrl!.isNotEmpty)
                                         ? DecorationImage(
                                             image: NetworkImage(
@@ -185,7 +295,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                         : null,
                               ),
                               child: (_newAvatar == null &&
-                                      (_currentAvatarUrl == null ||
+                                      (_removeAvatar ||
+                                          _currentAvatarUrl == null ||
                                           _currentAvatarUrl!.isEmpty))
                                   ? Center(
                                       child: Text(
