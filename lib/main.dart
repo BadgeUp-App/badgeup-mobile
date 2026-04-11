@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'services/user_session.dart';
 import 'theme/theme_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
+import 'screens/main_shell.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  UserSession.instance.loadFromStorage();
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider<UserSession>.value(value: UserSession.instance),
+      ],
       child: const BadgeUpApp(),
     ),
   );
@@ -27,10 +34,25 @@ class BadgeUpApp extends StatelessWidget {
       darkTheme: AppTheme.dark,
       themeMode: themeProvider.themeMode,
       builder: (context, child) {
-        AppTheme.syncBrightness(Theme.of(context).brightness);
-        return child ?? const SizedBox.shrink();
+        return Builder(
+          builder: (ctx) {
+            AppTheme.syncBrightness(Theme.of(ctx).brightness);
+            return child ?? const SizedBox.shrink();
+          },
+        );
       },
-      home: const LoginScreen(),
+      home: const _AuthGate(),
     );
+  }
+}
+
+class _AuthGate extends StatelessWidget {
+  const _AuthGate();
+
+  @override
+  Widget build(BuildContext context) {
+    final session = context.watch<UserSession>();
+    if (session.isLoggedIn) return const MainShell();
+    return const LoginScreen();
   }
 }

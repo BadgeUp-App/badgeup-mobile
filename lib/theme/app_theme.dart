@@ -55,11 +55,8 @@ class AppTheme {
   static const Color _darkSurfaceContainerLow = Color(0xFF14171F);
   static const Color _darkSurfaceContainer = Color(0xFF181C25);
   static const Color _darkSurfaceContainerHigh = Color(0xFF1F232D);
-  static const Color _darkSurfaceContainerHighest = Color(0xFF262B36);
-  static const Color _darkSurfaceDim = Color(0xFF0A0C11);
   static const Color _darkOnSurface = Color(0xFFE5E8F0);
   static const Color _darkOnSurfaceVariant = Color(0xFF9C9FA8);
-  static const Color _darkOutline = Color(0xFF6A6E77);
   static const Color _darkOutlineVariant = Color(0xFF3A3E46);
 
   // Compat aliases that old screens still reference.
@@ -82,44 +79,33 @@ class AppTheme {
     _brightness = b;
   }
 
-  // Adaptive getters. These are NOT const, so widgets that reference them
-  // cannot be wrapped in `const` constructors.
+  // Only the scaffold background adapts in dark mode. Everything else stays
+  // on the light palette so cards/containers keep their original design.
   static Color get surface => _isDark ? _darkSurface : _lightSurface;
-  static Color get surfaceContainerLowest =>
-      _isDark ? _darkSurfaceContainerLowest : _lightSurfaceContainerLowest;
-  static Color get surfaceContainerLow =>
-      _isDark ? _darkSurfaceContainerLow : _lightSurfaceContainerLow;
-  static Color get surfaceContainer =>
-      _isDark ? _darkSurfaceContainer : _lightSurfaceContainer;
-  static Color get surfaceContainerHigh =>
-      _isDark ? _darkSurfaceContainerHigh : _lightSurfaceContainerHigh;
-  static Color get surfaceContainerHighest =>
-      _isDark ? _darkSurfaceContainerHighest : _lightSurfaceContainerHighest;
-  static Color get surfaceDim => _isDark ? _darkSurfaceDim : _lightSurfaceDim;
-  static Color get onSurface => _isDark ? _darkOnSurface : _lightOnSurface;
-  static Color get onSurfaceVariant =>
-      _isDark ? _darkOnSurfaceVariant : _lightOnSurfaceVariant;
-  static Color get outline => _isDark ? _darkOutline : _lightOutline;
-  static Color get outlineVariant =>
-      _isDark ? _darkOutlineVariant : _lightOutlineVariant;
+  static Color get surfaceContainerLowest => _lightSurfaceContainerLowest;
+  static Color get surfaceContainerLow => _lightSurfaceContainerLow;
+  static Color get surfaceContainer => _lightSurfaceContainer;
+  static Color get surfaceContainerHigh => _lightSurfaceContainerHigh;
+  static Color get surfaceContainerHighest => _lightSurfaceContainerHighest;
+  static Color get surfaceDim => _lightSurfaceDim;
+  static Color get onSurface => _lightOnSurface;
+  static Color get onSurfaceVariant => _lightOnSurfaceVariant;
+  static Color get outline => _lightOutline;
+  static Color get outlineVariant => _lightOutlineVariant;
 
-  static List<BoxShadow> get softShadow => [
+  static List<BoxShadow> get softShadow => const [
         BoxShadow(
-          color: _isDark
-              ? const Color(0x33000000)
-              : const Color(0x0F2E333A),
+          color: Color(0x0F2E333A),
           blurRadius: 40,
-          offset: const Offset(0, 20),
+          offset: Offset(0, 20),
         ),
       ];
 
-  static List<BoxShadow> get subtleLift => [
+  static List<BoxShadow> get subtleLift => const [
         BoxShadow(
-          color: _isDark
-              ? const Color(0x22000000)
-              : const Color(0x0A2E333A),
+          color: Color(0x0A2E333A),
           blurRadius: 16,
-          offset: const Offset(0, 4),
+          offset: Offset(0, 4),
         ),
       ];
 
@@ -211,91 +197,9 @@ class AppTheme {
     ),
   );
 
-  static final dark = ThemeData(
-    brightness: Brightness.dark,
-    primaryColor: primaryContainer,
+  // Dark mode reuses the full light ThemeData and only swaps the scaffold
+  // background. All cards, inputs, buttons and typography stay identical.
+  static final dark = light.copyWith(
     scaffoldBackgroundColor: _darkSurface,
-    colorScheme: const ColorScheme(
-      brightness: Brightness.dark,
-      primary: primaryContainer,
-      onPrimary: Color(0xFFFFFFFF),
-      primaryContainer: primary,
-      onPrimaryContainer: Color(0xFFD9E7FF),
-      secondary: Color(0xFFE1BBF0),
-      onSecondary: Color(0xFF2D0043),
-      secondaryContainer: Color(0xFF5B1681),
-      onSecondaryContainer: Color(0xFFF6D9FF),
-      tertiary: Color(0xFF60EC79),
-      onTertiary: Color(0xFF003912),
-      tertiaryContainer: Color(0xFF00531E),
-      onTertiaryContainer: Color(0xFF6FFB85),
-      error: Color(0xFFFFB4AB),
-      onError: Color(0xFF690005),
-      errorContainer: Color(0xFF93000A),
-      onErrorContainer: Color(0xFFFFDAD6),
-      surface: _darkSurface,
-      onSurface: _darkOnSurface,
-      onSurfaceVariant: _darkOnSurfaceVariant,
-      outline: _darkOutline,
-      outlineVariant: _darkOutlineVariant,
-      surfaceContainerLowest: _darkSurfaceContainerLowest,
-      surfaceContainerLow: _darkSurfaceContainerLow,
-      surfaceContainer: _darkSurfaceContainer,
-      surfaceContainerHigh: _darkSurfaceContainerHigh,
-      surfaceContainerHighest: _darkSurfaceContainerHighest,
-    ),
-    textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).apply(
-      bodyColor: _darkOnSurface,
-      displayColor: _darkOnSurface,
-    ),
-    appBarTheme: AppBarTheme(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      centerTitle: false,
-      titleTextStyle: GoogleFonts.inter(
-        fontSize: 19,
-        fontWeight: FontWeight.w700,
-        color: _darkOnSurface,
-        letterSpacing: -0.4,
-      ),
-      iconTheme: const IconThemeData(color: _darkOnSurface),
-    ),
-    cardTheme: CardThemeData(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      color: _darkSurfaceContainer,
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: _darkSurfaceContainerLow,
-      hintStyle: GoogleFonts.inter(
-        color: _darkOnSurfaceVariant.withValues(alpha: 0.55),
-        fontSize: 14,
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: primaryContainer, width: 2),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: pastelPeach,
-        foregroundColor: onPastelPeach,
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-        textStyle: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700),
-        elevation: 0,
-        shadowColor: Colors.transparent,
-      ),
-    ),
   );
 }

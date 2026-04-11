@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../models/capture_entry.dart';
+import '../services/content_api.dart';
 import '../theme/app_theme.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -10,13 +13,20 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  DateTime _currentMonth = DateTime(2025, 12);
+  DateTime _currentMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  late Future<List<CaptureEntry>> _future;
 
-  final Map<int, String> _events = {
-    1: 'Nissan GT-R R35',
-    3: 'Nissan Skyline R34',
-    15: 'Ford Mustang GT',
-  };
+  @override
+  void initState() {
+    super.initState();
+    _future = ContentApi.instance.fetchCaptureHistory();
+  }
+
+  Future<void> _reload() async {
+    setState(() {
+      _future = ContentApi.instance.fetchCaptureHistory();
+    });
+  }
 
   void _previousMonth() {
     setState(() {
@@ -30,171 +40,221 @@ class _CalendarScreenState extends State<CalendarScreen> {
     });
   }
 
+  Map<int, List<CaptureEntry>> _captureByDay(List<CaptureEntry> all) {
+    final map = <int, List<CaptureEntry>>{};
+    for (final c in all) {
+      final d = c.unlockedAt?.toLocal();
+      if (d == null) continue;
+      if (d.year != _currentMonth.year || d.month != _currentMonth.month) {
+        continue;
+      }
+      map.putIfAbsent(d.day, () => []).add(c);
+    }
+    return map;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 18, 24, 120),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceContainerLowest,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: AppTheme.subtleLift,
-                      ),
-                      child: Icon(Icons.arrow_back_ios_new_rounded,
-                          size: 18, color: AppTheme.onSurface),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Calendario',
-                    style: GoogleFonts.inter(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.3,
-                      color: AppTheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-              Text(
-                'TU ACTIVIDAD',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.6,
-                  color: AppTheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Agenda de capturas',
-                style: GoogleFonts.inter(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.9,
-                  color: AppTheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Explora tus stickers desbloqueados por dia',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  color: AppTheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(24),
-                ),
+        child: RefreshIndicator(
+          onRefresh: _reload,
+          child: FutureBuilder<List<CaptureEntry>>(
+            future: _future,
+            builder: (context, snapshot) {
+              final loading =
+                  snapshot.connectionState == ConnectionState.waiting;
+              final all = snapshot.data ?? const <CaptureEntry>[];
+              final events = _captureByDay(all);
+
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(24, 18, 24, 120),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildMonthSelector(),
-                    const SizedBox(height: 14),
-                    _buildDayHeaders(),
-                    const SizedBox(height: 6),
-                    _buildCalendarGrid(),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-              if (_events.isNotEmpty) ...[
-                Text(
-                  'Capturas este mes',
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.4,
-                    color: AppTheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                ..._events.entries.map((entry) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
+                    Row(
                       children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: AppTheme.pastelPeach,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${entry.key}',
-                              style: GoogleFonts.inter(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.onPastelPeach,
-                              ),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceContainerLowest,
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: AppTheme.subtleLift,
                             ),
+                            child: Icon(Icons.arrow_back_ios_new_rounded,
+                                size: 18, color: AppTheme.onSurface),
                           ),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                entry.value,
-                                style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.onSurface,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Album: carros',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  color: AppTheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(width: 12),
+                        Text(
+                          'Calendario',
+                          style: GoogleFonts.inter(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                            color: AppTheme.onSurface,
                           ),
                         ),
-                        const Icon(Icons.check_circle_rounded,
-                            size: 20, color: AppTheme.tertiary),
                       ],
                     ),
-                  );
-                }),
-              ],
-            ],
+                    const SizedBox(height: 28),
+                    Text(
+                      'TU ACTIVIDAD',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.6,
+                        color: AppTheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Agenda de capturas',
+                      style: GoogleFonts.inter(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.9,
+                        color: AppTheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${all.length} capturas totales',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: AppTheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (loading && all.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildMonthSelector(),
+                            const SizedBox(height: 14),
+                            _buildDayHeaders(),
+                            const SizedBox(height: 6),
+                            _buildCalendarGrid(events),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 28),
+                    if (events.isNotEmpty) ...[
+                      Text(
+                        'Capturas este mes',
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4,
+                          color: AppTheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      ...(events.entries.toList()
+                            ..sort((a, b) => a.key.compareTo(b.key)))
+                          .expand((entry) => entry.value.map(
+                                (c) => _eventCard(c.stickerName, c.albumTitle,
+                                    entry.key),
+                              )),
+                    ],
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),
     );
   }
 
+  Widget _eventCard(String name, String album, int day) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppTheme.pastelPeach,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Center(
+              child: Text(
+                '$day',
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.onPastelPeach,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Album: $album',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: AppTheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.check_circle_rounded,
+              size: 20, color: AppTheme.tertiary),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMonthSelector() {
-    final months = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    const months = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
     ];
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -259,9 +319,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildCalendarGrid() {
+  Widget _buildCalendarGrid(Map<int, List<CaptureEntry>> events) {
     final firstDay = DateTime(_currentMonth.year, _currentMonth.month, 1);
-    final daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
+    final daysInMonth =
+        DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
     final startWeekday = firstDay.weekday % 7;
 
     final cells = <Widget>[];
@@ -271,14 +332,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
 
     for (int day = 1; day <= daysInMonth; day++) {
-      final hasEvent = _events.containsKey(day);
+      final list = events[day];
+      final hasEvent = list != null && list.isNotEmpty;
       cells.add(
         GestureDetector(
           onTap: hasEvent
               ? () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('${_events[day]} capturado el dia $day'),
+                      content: Text(
+                          '${list.length} captura(s) el dia $day: ${list.first.stickerName}'),
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),

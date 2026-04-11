@@ -1,18 +1,34 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../data/mock_data.dart';
+import '../models/user_profile.dart';
+import '../services/content_api.dart';
 import '../theme/app_theme.dart';
 
-class RankingScreen extends StatelessWidget {
+class RankingScreen extends StatefulWidget {
   const RankingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final ranking = MockData.ranking;
-    final top3 = ranking.take(3).toList();
-    final rest = ranking.skip(3).toList();
+  State<RankingScreen> createState() => _RankingScreenState();
+}
 
+class _RankingScreenState extends State<RankingScreen> {
+  late Future<List<RankingEntry>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = ContentApi.instance.fetchLeaderboard();
+  }
+
+  Future<void> _reload() async {
+    setState(() {
+      _future = ContentApi.instance.fetchLeaderboard();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: Stack(
@@ -35,185 +51,233 @@ class RankingScreen extends StatelessWidget {
             ),
           ),
           SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceContainerLowest,
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: AppTheme.subtleLift,
-                          ),
-                          child: Icon(Icons.emoji_events_rounded,
-                              color: AppTheme.onSurface, size: 22),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Ranking global',
-                          style: GoogleFonts.inter(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.3,
-                            color: AppTheme.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+            child: FutureBuilder<List<RankingEntry>>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'TEMPORADA ACTUAL',
+                          'No se pudo cargar el ranking.',
                           style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.6,
+                            fontSize: 14,
                             color: AppTheme.onSurfaceVariant,
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Los mejores cazadores',
-                          style: GoogleFonts.inter(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -1,
-                            color: AppTheme.onSurface,
-                          ),
+                        const SizedBox(height: 10),
+                        TextButton(
+                          onPressed: _reload,
+                          child: const Text('Reintentar'),
                         ),
                       ],
                     ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                    child: _PodiumCard(top3: top3),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 14),
+                  );
+                }
+                final ranking = snapshot.data ?? const <RankingEntry>[];
+                if (ranking.isEmpty) {
+                  return Center(
                     child: Text(
-                      'Clasificacion',
+                      'Aun no hay jugadores en el ranking.',
                       style: GoogleFonts.inter(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.4,
-                        color: AppTheme.onSurface,
+                        fontSize: 14,
+                        color: AppTheme.onSurfaceVariant,
                       ),
                     ),
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final entry = rest[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
+                  );
+                }
+                final top3 = ranking.take(3).toList();
+                final rest = ranking.skip(3).toList();
+                return RefreshIndicator(
+                  onRefresh: _reload,
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
                           child: Row(
                             children: [
-                              SizedBox(
-                                width: 36,
-                                child: Text(
-                                  '#${entry.rank}',
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppTheme.onSurfaceVariant,
-                                    letterSpacing: -0.2,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
                               Container(
-                                width: 42,
-                                height: 42,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppTheme.secondaryContainer,
-                                      AppTheme.pastelPeach,
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.surfaceContainerLowest,
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: AppTheme.subtleLift,
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    entry.displayName.isNotEmpty
-                                        ? entry.displayName[0].toUpperCase()
-                                        : '?',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppTheme.onSurface,
-                                    ),
-                                  ),
-                                ),
+                                child: Icon(Icons.emoji_events_rounded,
+                                    color: AppTheme.onSurface, size: 22),
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      entry.displayName,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppTheme.onSurface,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '@${entry.username}',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11,
-                                        color: AppTheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              const SizedBox(width: 12),
                               Text(
-                                '${entry.points} pts',
+                                'Ranking global',
                                 style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primary,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
                                   letterSpacing: -0.3,
+                                  color: AppTheme.onSurface,
                                 ),
                               ),
                             ],
                           ),
-                        );
-                      },
-                      childCount: rest.length,
-                    ),
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'TEMPORADA ACTUAL',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.6,
+                                  color: AppTheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Los mejores cazadores',
+                                style: GoogleFonts.inter(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -1,
+                                  color: AppTheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (top3.length >= 3)
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                            child: _PodiumCard(top3: top3),
+                          ),
+                        ),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 28, 24, 14),
+                          child: Text(
+                            'Clasificacion',
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.4,
+                              color: AppTheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final entry = rest[index];
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.surfaceContainerLow,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 36,
+                                      child: Text(
+                                        '#${entry.rank}',
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppTheme.onSurfaceVariant,
+                                          letterSpacing: -0.2,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Container(
+                                      width: 42,
+                                      height: 42,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            AppTheme.secondaryContainer,
+                                            AppTheme.pastelPeach,
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          entry.displayName.isNotEmpty
+                                              ? entry.displayName[0].toUpperCase()
+                                              : '?',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppTheme.onSurface,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            entry.displayName,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppTheme.onSurface,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '@${entry.username}',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 11,
+                                              color: AppTheme.onSurfaceVariant,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Text(
+                                      '${entry.points} pts',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppTheme.primary,
+                                        letterSpacing: -0.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            childCount: rest.length,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                );
+              },
             ),
           ),
         ],
@@ -224,7 +288,7 @@ class RankingScreen extends StatelessWidget {
 
 class _PodiumCard extends StatelessWidget {
   const _PodiumCard({required this.top3});
-  final List top3;
+  final List<RankingEntry> top3;
 
   @override
   Widget build(BuildContext context) {
@@ -282,7 +346,7 @@ class _PodiumColumn extends StatelessWidget {
     required this.position,
   });
 
-  final dynamic entry;
+  final RankingEntry entry;
   final double height;
   final Color accent;
   final int position;

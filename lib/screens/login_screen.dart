@@ -1,8 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
-import 'main_shell.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,21 +13,65 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'fer@badgeup.io');
-  final _passwordController = TextEditingController(text: 'password');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _loading = false;
+  bool _googleLoading = false;
 
-  void _login() {
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (_, a, __) => FadeTransition(
-          opacity: a,
-          child: const MainShell(),
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      _showError('Ingresa correo y contrasena.');
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await AuthService.instance.login(username: email, password: password);
+      // AuthGate will swap to MainShell once the session updates.
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      _showError(e.message);
+    } catch (e) {
+      if (!mounted) return;
+      _showError('Error de conexion con el servidor.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _loginWithGoogle() async {
+    setState(() => _googleLoading = true);
+    try {
+      await AuthService.instance.signInWithGoogle();
+      // AuthGate will swap to MainShell once the session updates.
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      _showError(e.message);
+    } catch (e) {
+      if (!mounted) return;
+      _showError('Error de conexion con Google.');
+    } finally {
+      if (mounted) setState(() => _googleLoading = false);
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          backgroundColor: AppTheme.error,
+          content: Text(
+            message,
+            style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          margin: const EdgeInsets.all(16),
         ),
-      ),
-    );
+      );
   }
 
   void _pendingDialog(String title, String body) {
@@ -138,23 +183,32 @@ class _LoginScreenState extends State<LoginScreen> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: _login,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Iniciar sesion',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppTheme.onPastelPeach,
+                              onPressed: _loading ? null : _login,
+                              child: _loading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.4,
+                                        color: AppTheme.onPastelPeach,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Iniciar sesion',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.onPastelPeach,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        const Icon(Icons.arrow_forward_rounded,
+                                            size: 18, color: AppTheme.onPastelPeach),
+                                      ],
                                     ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Icon(Icons.arrow_forward_rounded,
-                                      size: 18, color: AppTheme.onPastelPeach),
-                                ],
-                              ),
                             ),
                           ),
                           const SizedBox(height: 28),
@@ -182,10 +236,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               _SocialButton(
                                 icon: Icons.g_mobiledata_rounded,
                                 color: AppTheme.primary,
-                                onTap: () => _pendingDialog(
-                                  'Google OAuth',
-                                  'Se iniciara sesion con Google. Funcionalidad pendiente.',
-                                ),
+                                loading: _googleLoading,
+                                onTap: _googleLoading ? null : _loginWithGoogle,
                               ),
                               const SizedBox(width: 12),
                               _SocialButton(
@@ -222,9 +274,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => _pendingDialog(
-                            'Registro',
-                            'Se abrira el formulario de registro. Funcionalidad pendiente.',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const RegisterScreen(),
+                            ),
                           ),
                           child: Text(
                             'Crea una ahora',
@@ -482,11 +536,13 @@ class _SocialButton extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.onTap,
+    this.loading = false,
   });
 
   final IconData icon;
   final Color color;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -499,7 +555,18 @@ class _SocialButton extends StatelessWidget {
             color: AppTheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(icon, size: 26, color: color.withValues(alpha: 0.8)),
+          child: loading
+              ? Center(
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: color.withValues(alpha: 0.8),
+                    ),
+                  ),
+                )
+              : Icon(icon, size: 26, color: color.withValues(alpha: 0.8)),
         ),
       ),
     );

@@ -1,9 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
+import '../models/friend_request.dart';
+import '../services/social_api.dart';
+import '../services/user_session.dart';
 import '../theme/app_theme.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({
+    super.key,
+    this.otherUserId,
+    this.otherName,
+  });
+
+  final int? otherUserId;
+  final String? otherName;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -13,41 +27,112 @@ class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
 
-  final List<_ChatMessage> _messages = [
-    _ChatMessage(text: 'Viste el Porsche 911 en Zapopan?', isMe: false, time: '5:30 PM'),
-    _ChatMessage(text: 'Si, ya lo capture! +90 pts', isMe: true, time: '5:31 PM'),
-    _ChatMessage(text: 'No mames! Yo lo vi pero no tenia senal GPS', isMe: false, time: '5:32 PM'),
-  ];
+  List<ChatMessageModel> _messages = const [];
+  bool _loading = true;
+  bool _sending = false;
+  String? _error;
+  Timer? _refreshTimer;
 
-  void _sendMessage() {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+  int? get _otherId => widget.otherUserId;
 
-    setState(() {
-      _messages.add(_ChatMessage(text: text, isMe: true, time: 'Ahora'));
-    });
-    _messageController.clear();
+  @override
+  void initState() {
+    super.initState();
+    if (_otherId != null) {
+      _loadMessages();
+      _refreshTimer = Timer.periodic(
+        const Duration(seconds: 5),
+        (_) => _loadMessages(silent: true),
+      );
+    } else {
+      _loading = false;
+    }
+  }
 
+  Future<void> _loadMessages({bool silent = false}) async {
+    if (_otherId == null) return;
+    if (!silent) setState(() => _loading = true);
+    try {
+      final list = await SocialApi.instance.fetchChatMessages(_otherId!);
+      if (!mounted) return;
+      setState(() {
+        _messages = list;
+        _loading = false;
+        _error = null;
+      });
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 220),
           curve: Curves.easeOut,
         );
       }
     });
   }
 
+  Future<void> _sendMessage() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty || _otherId == null || _sending) return;
+    setState(() => _sending = true);
+    try {
+      final msg = await SocialApi.instance.sendChatMessage(
+        otherId: _otherId!,
+        text: text,
+      );
+      if (!mounted) return;
+      setState(() {
+        _messages = [..._messages, msg];
+        _messageController.clear();
+      });
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
+  String _formatTime(DateTime? t) {
+    if (t == null) return '';
+    final local = t.toLocal();
+    final h = local.hour.toString().padLeft(2, '0');
+    final m = local.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final session = context.watch<UserSession>();
+    final meId = session.user?.id;
+    final name = widget.otherName ?? 'Chat';
+
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: SafeArea(
@@ -88,7 +173,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     child: Center(
                       child: Text(
-                        'F',
+                        name.isNotEmpty ? name[0].toUpperCase() : '?',
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
@@ -98,102 +183,70 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'fer admn',
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.onSurface,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppTheme.tertiary,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            'En linea',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: AppTheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  Text(
+                    name,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.onSurface,
+                      letterSpacing: -0.3,
+                    ),
                   ),
                 ],
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final msg = _messages[index];
-                  return _buildBubble(msg);
-                },
-              ),
+              child: _otherId == null
+                  ? Center(
+                      child: Text(
+                        'Selecciona un amigo para chatear.',
+                        style: GoogleFonts.inter(
+                            color: AppTheme.onSurfaceVariant),
+                      ),
+                    )
+                  : _loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _error != null
+                          ? Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('No se pudo cargar.',
+                                      style: GoogleFonts.inter(
+                                          color: AppTheme.onSurfaceVariant)),
+                                  TextButton(
+                                    onPressed: _loadMessages,
+                                    child: const Text('Reintentar'),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : _messages.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'Aun no hay mensajes. Di hola.',
+                                    style: GoogleFonts.inter(
+                                        color: AppTheme.onSurfaceVariant),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  controller: _scrollController,
+                                  padding: const EdgeInsets.fromLTRB(
+                                      20, 12, 20, 20),
+                                  itemCount: _messages.length,
+                                  itemBuilder: (context, index) {
+                                    final msg = _messages[index];
+                                    final isMe = meId != null &&
+                                        msg.senderId == meId;
+                                    return _buildBubble(msg, isMe);
+                                  },
+                                ),
             ),
             Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-              ),
+              decoration: const BoxDecoration(),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          backgroundColor: AppTheme.surfaceContainerLowest,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28)),
-                          title: Text('Adjuntar archivo',
-                              style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w800)),
-                          content: Text(
-                            'Aqui se podra adjuntar imagenes o archivos al chat. Funcionalidad pendiente.',
-                            style: GoogleFonts.inter(
-                                color: AppTheme.onSurfaceVariant),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: Text('Entendido',
-                                  style: GoogleFonts.inter(
-                                      color: AppTheme.primary,
-                                      fontWeight: FontWeight.w700)),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(Icons.attach_file_rounded,
-                          size: 20, color: AppTheme.onSurfaceVariant),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
@@ -202,6 +255,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       child: TextField(
                         controller: _messageController,
+                        enabled: _otherId != null && !_sending,
                         style: GoogleFonts.inter(
                             fontSize: 14, color: AppTheme.onSurface),
                         decoration: InputDecoration(
@@ -223,7 +277,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(width: 10),
                   GestureDetector(
-                    onTap: _sendMessage,
+                    onTap: _sending ? null : _sendMessage,
                     child: Container(
                       width: 44,
                       height: 44,
@@ -232,8 +286,16 @@ class _ChatScreenState extends State<ChatScreen> {
                         color: AppTheme.pastelPeach,
                         boxShadow: AppTheme.subtleLift,
                       ),
-                      child: const Icon(Icons.send_rounded,
-                          size: 20, color: AppTheme.onPastelPeach),
+                      child: _sending
+                          ? const Padding(
+                              padding: EdgeInsets.all(12),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppTheme.onPastelPeach,
+                              ),
+                            )
+                          : const Icon(Icons.send_rounded,
+                              size: 20, color: AppTheme.onPastelPeach),
                     ),
                   ),
                 ],
@@ -245,11 +307,11 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildBubble(_ChatMessage msg) {
-    final bg = msg.isMe ? AppTheme.pastelPeach : AppTheme.surfaceContainerLow;
-    final fg = msg.isMe ? AppTheme.onPastelPeach : AppTheme.onSurface;
+  Widget _buildBubble(ChatMessageModel msg, bool isMe) {
+    final bg = isMe ? AppTheme.pastelPeach : AppTheme.surfaceContainerLow;
+    final fg = isMe ? AppTheme.onPastelPeach : AppTheme.onSurface;
     return Align(
-      alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         constraints: BoxConstraints(
@@ -261,8 +323,8 @@ class _ChatScreenState extends State<ChatScreen> {
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(20),
             topRight: const Radius.circular(20),
-            bottomLeft: Radius.circular(msg.isMe ? 20 : 6),
-            bottomRight: Radius.circular(msg.isMe ? 6 : 20),
+            bottomLeft: Radius.circular(isMe ? 20 : 6),
+            bottomRight: Radius.circular(isMe ? 6 : 20),
           ),
         ),
         child: Column(
@@ -279,11 +341,11 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              msg.time,
+              _formatTime(msg.createdAt),
               style: GoogleFonts.inter(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: msg.isMe
+                color: isMe
                     ? AppTheme.onPastelPeach.withValues(alpha: 0.6)
                     : AppTheme.onSurfaceVariant,
               ),
@@ -293,12 +355,4 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
-}
-
-class _ChatMessage {
-  final String text;
-  final bool isMe;
-  final String time;
-
-  _ChatMessage({required this.text, required this.isMe, required this.time});
 }

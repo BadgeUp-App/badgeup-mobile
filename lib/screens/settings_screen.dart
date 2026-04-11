@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../theme/theme_provider.dart';
 import '../theme/app_theme.dart';
+import 'edit_profile_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -156,11 +157,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
               context,
               icon: Icons.person_outline_rounded,
               label: 'Editar perfil',
-              onTap: () => _infoDialog(
-                context,
-                'Editar perfil',
-                'Se abrira el editor de perfil para cambiar nombre, foto y biografia. Funcionalidad pendiente.',
-              ),
+              onTap: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final updated = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const EditProfileScreen(),
+                  ),
+                );
+                if (updated == true) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: const Text('Perfil actualizado'),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                  );
+                }
+              },
             ),
             _settingsTile(
               context,

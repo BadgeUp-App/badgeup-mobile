@@ -4,41 +4,26 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../models/album.dart';
 import '../services/content_api.dart';
 import '../theme/app_theme.dart';
 
-class EditAlbumScreen extends StatefulWidget {
-  final Album album;
-
-  const EditAlbumScreen({super.key, required this.album});
+class CreateAlbumScreen extends StatefulWidget {
+  const CreateAlbumScreen({super.key});
 
   @override
-  State<EditAlbumScreen> createState() => _EditAlbumScreenState();
+  State<CreateAlbumScreen> createState() => _CreateAlbumScreenState();
 }
 
-class _EditAlbumScreenState extends State<EditAlbumScreen> {
-  late TextEditingController _titleController;
-  late TextEditingController _themeController;
-  late TextEditingController _descController;
-  late TextEditingController _priceController;
-  late bool _isPremium;
+class _CreateAlbumScreenState extends State<CreateAlbumScreen> {
+  final _titleController = TextEditingController();
+  final _themeController = TextEditingController();
+  final _descController = TextEditingController();
+  final _priceController = TextEditingController();
+  bool _isPremium = false;
 
   final _picker = ImagePicker();
-  File? _newCover;
-  bool _saving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _titleController = TextEditingController(text: widget.album.title);
-    _themeController = TextEditingController(text: widget.album.theme);
-    _descController = TextEditingController(text: widget.album.description);
-    _priceController = TextEditingController(
-      text: widget.album.price?.toStringAsFixed(2) ?? '',
-    );
-    _isPremium = widget.album.isPremium;
-  }
+  File? _cover;
+  bool _submitting = false;
 
   @override
   void dispose() {
@@ -57,41 +42,40 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
         maxHeight: 2000,
         imageQuality: 85,
       );
-      if (picked != null) setState(() => _newCover = File(picked.path));
+      if (picked != null) setState(() => _cover = File(picked.path));
     } catch (e) {
       _snack('No se pudo abrir la galeria: $e');
     }
   }
 
-  Future<void> _saveChanges() async {
+  Future<void> _createAlbum() async {
     if (_titleController.text.trim().isEmpty) {
       _snack('El titulo es obligatorio');
       return;
     }
-    setState(() => _saving = true);
+    setState(() => _submitting = true);
     try {
       double? price;
       final rawPrice = _priceController.text.trim();
       if (rawPrice.isNotEmpty) {
         price = double.tryParse(rawPrice);
       }
-      await ContentApi.instance.updateAlbum(
-        id: widget.album.id,
+      await ContentApi.instance.createAlbum(
         title: _titleController.text.trim(),
         description: _descController.text.trim(),
         theme: _themeController.text.trim(),
         isPremium: _isPremium,
         price: price,
-        coverImage: _newCover,
+        coverImage: _cover,
       );
       if (!mounted) return;
-      _snack('Cambios guardados');
+      _snack('Album creado');
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      _snack('Error al guardar: $e');
+      _snack('Error al crear album: $e');
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
@@ -133,7 +117,7 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Editar album',
+                    'Nuevo album',
                     style: GoogleFonts.inter(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
@@ -145,12 +129,20 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
               ),
               const SizedBox(height: 28),
               Text(
-                'Editar',
+                'Crear',
                 style: GoogleFonts.inter(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.9,
                   color: AppTheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Arma una nueva coleccion para que la comunidad la complete.',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppTheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 28),
@@ -159,7 +151,8 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
               TextField(
                 controller: _titleController,
                 style: GoogleFonts.inter(color: AppTheme.onSurface),
-                decoration: const InputDecoration(hintText: 'Nombre del album'),
+                decoration: const InputDecoration(
+                    hintText: 'Ej: Clasicos europeos'),
               ),
               const SizedBox(height: 20),
               _label('Tema'),
@@ -167,7 +160,8 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
               TextField(
                 controller: _themeController,
                 style: GoogleFonts.inter(color: AppTheme.onSurface),
-                decoration: const InputDecoration(hintText: 'Tema del album'),
+                decoration:
+                    const InputDecoration(hintText: 'Ej: Deportivos, SUVs...'),
               ),
               const SizedBox(height: 20),
               _label('Descripcion'),
@@ -177,7 +171,7 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
                 maxLines: 3,
                 style: GoogleFonts.inter(color: AppTheme.onSurface),
                 decoration: const InputDecoration(
-                    hintText: 'Descripcion del album...'),
+                    hintText: 'De que trata este album...'),
               ),
               const SizedBox(height: 20),
               Row(
@@ -205,7 +199,8 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
                               ),
                               child: _isPremium
                                   ? const Icon(Icons.check_rounded,
-                                      size: 16, color: AppTheme.onPastelPeach)
+                                      size: 16,
+                                      color: AppTheme.onPastelPeach)
                                   : null,
                             ),
                             const SizedBox(width: 12),
@@ -227,7 +222,12 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
                     child: TextField(
                       controller: _priceController,
                       keyboardType: TextInputType.number,
-                      style: GoogleFonts.inter(color: AppTheme.onSurface),
+                      enabled: _isPremium,
+                      style: GoogleFonts.inter(
+                        color: _isPremium
+                            ? AppTheme.onSurface
+                            : AppTheme.onSurfaceVariant,
+                      ),
                       decoration: const InputDecoration(hintText: '0.00'),
                     ),
                   ),
@@ -237,19 +237,19 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
               GestureDetector(
                 onTap: _selectCover,
                 child: Container(
-                  height: 160,
+                  height: 180,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: AppTheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(20),
-                    image: _newCover != null
+                    image: _cover != null
                         ? DecorationImage(
-                            image: FileImage(_newCover!),
+                            image: FileImage(_cover!),
                             fit: BoxFit.cover,
                           )
                         : null,
                   ),
-                  child: _newCover != null
+                  child: _cover != null
                       ? null
                       : Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -266,7 +266,7 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
                             ),
                             const SizedBox(height: 10),
                             Text(
-                              'Cambiar portada (opcional)',
+                              'Seleccionar portada',
                               style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -282,7 +282,8 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: _saving ? null : () => Navigator.pop(context),
+                      onTap:
+                          _submitting ? null : () => Navigator.pop(context),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 18),
                         decoration: BoxDecoration(
@@ -306,7 +307,7 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
                   Expanded(
                     flex: 2,
                     child: GestureDetector(
-                      onTap: _saving ? null : _saveChanges,
+                      onTap: _submitting ? null : _createAlbum,
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 18),
                         decoration: BoxDecoration(
@@ -315,7 +316,7 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
                           boxShadow: AppTheme.subtleLift,
                         ),
                         child: Center(
-                          child: _saving
+                          child: _submitting
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
@@ -325,7 +326,7 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
                                   ),
                                 )
                               : Text(
-                                  'Guardar cambios',
+                                  'Crear album',
                                   style: GoogleFonts.inter(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,

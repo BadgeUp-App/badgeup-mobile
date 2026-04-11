@@ -2,12 +2,16 @@ import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../data/mock_data.dart';
+import 'package:provider/provider.dart';
+import '../models/album.dart';
+import '../models/user_profile.dart';
+import '../services/content_api.dart';
+import '../services/user_session.dart';
 import '../theme/app_theme.dart';
 import 'album_detail_screen.dart';
 import 'friends_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     this.onProfileTapped,
@@ -20,9 +24,29 @@ class HomeScreen extends StatelessWidget {
   final VoidCallback? onAlbumsTapped;
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late Future<List<Album>> _albumsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _albumsFuture = ContentApi.instance.fetchAlbums();
+    UserSession.instance.refresh();
+  }
+
+  Future<void> _reload() async {
+    setState(() {
+      _albumsFuture = ContentApi.instance.fetchAlbums();
+    });
+    await UserSession.instance.refresh();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final user = MockData.currentUser;
-    final album = MockData.albums.first;
+    final user = context.watch<UserSession>().user;
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -46,185 +70,220 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
-                    child: _TopBar(
-                      user: user,
-                      onProfileTapped: onProfileTapped,
+            child: RefreshIndicator(
+              onRefresh: _reload,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
+                      child: _TopBar(
+                        user: user,
+                        onProfileTapped: widget.onProfileTapped,
+                      ),
                     ),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _weekday(),
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: AppTheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Buenos dias, ${user.displayName.split(' ').first}',
-                          style: GoogleFonts.inter(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -1,
-                            color: AppTheme.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                    child: _PointsHeroCard(user: user, album: album),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _SideTile(
-                            icon: Icons.emoji_events_rounded,
-                            iconColor: AppTheme.onSecondaryContainer,
-                            iconBg: AppTheme.secondaryContainer,
-                            title: 'Ranking',
-                            subtitle: 'Escalaste 3 lugares esta semana.',
-                            trailingIcon: Icons.north_east_rounded,
-                            onTap: onRankingTapped,
-                            footer: _AvatarStack(count: 4, extra: 12),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _SideTile(
-                            icon: Icons.groups_rounded,
-                            iconColor: AppTheme.onTertiaryContainer,
-                            iconBg: AppTheme.tertiaryContainer,
-                            title: 'Amigos',
-                            subtitle: 'Sarah y 4 mas ganando puntos ahora.',
-                            trailingIcon: Icons.more_horiz_rounded,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const FriendsScreen()),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _weekday(),
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: AppTheme.onSurfaceVariant,
                             ),
-                            footer: const _MiniBar(progress: 0.75),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          Text(
+                            _greeting(user),
+                            style: GoogleFonts.inter(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -1,
+                              color: AppTheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 36, 24, 16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Albumes recientes',
-                                style: GoogleFonts.inter(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.6,
-                                ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                      child: _PointsHeroCard(user: user),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _SideTile(
+                              icon: Icons.emoji_events_rounded,
+                              iconColor: AppTheme.onSecondaryContainer,
+                              iconBg: AppTheme.secondaryContainer,
+                              title: 'Ranking',
+                              subtitle: user != null && user.rank > 0
+                                  ? 'Estas en la posicion #${user.rank} global.'
+                                  : 'Escala posiciones capturando stickers.',
+                              trailingIcon: Icons.north_east_rounded,
+                              onTap: widget.onRankingTapped,
+                              footer: _AvatarStack(count: 4, extra: 12),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _SideTile(
+                              icon: Icons.groups_rounded,
+                              iconColor: AppTheme.onTertiaryContainer,
+                              iconBg: AppTheme.tertiaryContainer,
+                              title: 'Amigos',
+                              subtitle: 'Encuentra y chatea con otros cazadores.',
+                              trailingIcon: Icons.more_horiz_rounded,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const FriendsScreen()),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Colecciones desbloqueadas esta temporada',
+                              footer: const _MiniBar(progress: 0.75),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 36, 24, 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Albumes recientes',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.6,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Colecciones disponibles en la app',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: AppTheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: widget.onAlbumsTapped,
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Ver todos',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.primary,
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right_rounded,
+                                    size: 18, color: AppTheme.primary),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 260,
+                      child: FutureBuilder<List<Album>>(
+                        future: _albumsFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          if (snapshot.hasError) {
+                            return Center(
+                              child: Text(
+                                'No se pudieron cargar los albumes.',
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
                                   color: AppTheme.onSurfaceVariant,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: onAlbumsTapped,
-                          child: Row(
-                            children: [
-                              Text(
-                                'Ver todos',
+                            );
+                          }
+                          final albums = snapshot.data ?? const <Album>[];
+                          if (albums.isEmpty) {
+                            return Center(
+                              child: Text(
+                                'No hay albumes disponibles aun.',
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.primary,
+                                  color: AppTheme.onSurfaceVariant,
                                 ),
                               ),
-                              const Icon(Icons.chevron_right_rounded,
-                                  size: 18, color: AppTheme.primary),
-                            ],
-                          ),
-                        ),
-                      ],
+                            );
+                          }
+                          return ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: albums.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 16),
+                            itemBuilder: (context, i) {
+                              final album = albums[i];
+                              return _AlbumScrollCard(
+                                title: album.title,
+                                subtitle: album.theme.isNotEmpty
+                                    ? album.theme
+                                    : album.description,
+                                imageUrl: album.coverUrl,
+                                accentIcon: Icons.collections_rounded,
+                                accentColor: AppTheme.primary,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => AlbumDetailScreen(album: album),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 260,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: 4,
-                      separatorBuilder: (_, __) => const SizedBox(width: 16),
-                      itemBuilder: (context, i) {
-                        final sticker = album.stickers[i % album.stickers.length];
-                        return _AlbumScrollCard(
-                          title: ['Neon Genesis', 'Morning Dew', 'Deep Space', 'Solar Echo'][i],
-                          subtitle: [
-                            'Ganado por racha de 50 dias',
-                            'Desbloqueado via reto semanal',
-                            'Recompensa rara',
-                            'Ganado por actividad outdoor',
-                          ][i],
-                          imageUrl: sticker.imageUrl,
-                          accentIcon: [
-                            Icons.verified_rounded,
-                            Icons.palette_rounded,
-                            Icons.diamond_rounded,
-                            Icons.eco_rounded,
-                          ][i],
-                          accentColor: [
-                            AppTheme.secondary,
-                            AppTheme.primary,
-                            AppTheme.onSurface,
-                            AppTheme.tertiary,
-                          ][i],
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => AlbumDetailScreen(album: album)),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 130)),
-              ],
+                  const SliverToBoxAdapter(child: SizedBox(height: 130)),
+                ],
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  String _greeting(UserProfile? user) {
+    final first =
+        (user?.displayName ?? 'Cazador').split(' ').firstWhere(
+              (s) => s.isNotEmpty,
+              orElse: () => 'Cazador',
+            );
+    return 'Buenos dias, $first';
   }
 
   String _weekday() {
@@ -240,11 +299,14 @@ class HomeScreen extends StatelessWidget {
 
 class _TopBar extends StatelessWidget {
   const _TopBar({required this.user, required this.onProfileTapped});
-  final dynamic user;
+  final UserProfile? user;
   final VoidCallback? onProfileTapped;
 
   @override
   Widget build(BuildContext context) {
+    final initial = (user?.displayName.isNotEmpty ?? false)
+        ? user!.displayName[0].toUpperCase()
+        : '?';
     return Row(
       children: [
         Container(
@@ -284,9 +346,7 @@ class _TopBar extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                (user.displayName as String).isNotEmpty
-                    ? (user.displayName as String)[0].toUpperCase()
-                    : '?',
+                initial,
                 style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -302,12 +362,13 @@ class _TopBar extends StatelessWidget {
 }
 
 class _PointsHeroCard extends StatelessWidget {
-  const _PointsHeroCard({required this.user, required this.album});
-  final dynamic user;
-  final dynamic album;
+  const _PointsHeroCard({required this.user});
+  final UserProfile? user;
 
   @override
   Widget build(BuildContext context) {
+    final points = user?.totalPoints ?? 0;
+    final rank = user?.rank ?? 0;
     return ClipRRect(
       borderRadius: BorderRadius.circular(32),
       child: Container(
@@ -371,7 +432,7 @@ class _PointsHeroCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 Text(
-                  _formatPoints(user.totalPoints as int),
+                  _formatPoints(points),
                   style: GoogleFonts.inter(
                     fontSize: 56,
                     fontWeight: FontWeight.w800,
@@ -387,7 +448,7 @@ class _PointsHeroCard extends StatelessWidget {
                         size: 18, color: AppTheme.tertiaryDim),
                     const SizedBox(width: 6),
                     Text(
-                      '+450 desde ayer',
+                      '${user?.totalStickers ?? 0} stickers capturados',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -414,7 +475,7 @@ class _PointsHeroCard extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'META SEMANAL',
+                                  'STICKERS',
                                   style: GoogleFonts.inter(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w700,
@@ -424,7 +485,7 @@ class _PointsHeroCard extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
-                                  '85%',
+                                  '${user?.totalStickers ?? 0}',
                                   style: GoogleFonts.inter(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w800,
@@ -455,7 +516,7 @@ class _PointsHeroCard extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
-                                  '#${user.rank} Global',
+                                  rank > 0 ? '#$rank Global' : '—',
                                   style: GoogleFonts.inter(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w800,
@@ -690,7 +751,7 @@ class _AlbumScrollCard extends StatelessWidget {
                     ),
                     errorWidget: (_, __, ___) => Container(
                       color: AppTheme.surfaceContainerHigh,
-                      child: Icon(Icons.directions_car_rounded,
+                      child: Icon(Icons.collections_rounded,
                           color: AppTheme.onSurfaceVariant, size: 40),
                     ),
                   ),

@@ -5,14 +5,47 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/album.dart';
 import '../models/sticker.dart';
+import '../services/content_api.dart';
 import '../theme/app_theme.dart';
 import 'edit_album_screen.dart';
 import 'sticker_detail_screen.dart';
 
-class AlbumDetailScreen extends StatelessWidget {
+class AlbumDetailScreen extends StatefulWidget {
   final Album album;
 
   const AlbumDetailScreen({super.key, required this.album});
+
+  @override
+  State<AlbumDetailScreen> createState() => _AlbumDetailScreenState();
+}
+
+class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
+  late Album album;
+  bool _loadingStickers = false;
+
+  @override
+  void initState() {
+    super.initState();
+    album = widget.album;
+    if (album.stickers.isEmpty) {
+      _loadDetail();
+    }
+  }
+
+  Future<void> _loadDetail() async {
+    setState(() => _loadingStickers = true);
+    try {
+      final full = await ContentApi.instance.fetchAlbumDetail(album.id);
+      if (mounted) {
+        setState(() {
+          album = full;
+          _loadingStickers = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingStickers = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,36 +132,59 @@ class AlbumDetailScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
-                  sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 14,
-                      mainAxisSpacing: 20,
-                      childAspectRatio: 0.68,
+                if (_loadingStickers)
+                  const SliverPadding(
+                    padding: EdgeInsets.only(top: 40, bottom: 140),
+                    sliver: SliverToBoxAdapter(
+                      child: Center(child: CircularProgressIndicator()),
                     ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final sticker = album.stickers[index];
-                        return _GridStickerTile(
-                          sticker: sticker,
-                          onTap: sticker.unlocked
-                              ? () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => StickerDetailScreen(sticker: sticker),
-                                    ),
-                                  );
-                                }
-                              : null,
-                        );
-                      },
-                      childCount: album.stickers.length,
+                  )
+                else if (album.stickers.isEmpty)
+                  SliverPadding(
+                    padding: const EdgeInsets.only(top: 30, bottom: 140),
+                    sliver: SliverToBoxAdapter(
+                      child: Center(
+                        child: Text(
+                          'Este album aun no tiene figuritas.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppTheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
+                    sliver: SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 14,
+                        mainAxisSpacing: 20,
+                        childAspectRatio: 0.68,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final sticker = album.stickers[index];
+                          return _GridStickerTile(
+                            sticker: sticker,
+                            onTap: sticker.unlocked
+                                ? () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => StickerDetailScreen(sticker: sticker),
+                                      ),
+                                    );
+                                  }
+                                : null,
+                          );
+                        },
+                        childCount: album.stickers.length,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

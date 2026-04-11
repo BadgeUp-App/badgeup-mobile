@@ -8,7 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:provider/provider.dart';
 
-import 'package:badgeup_mobile/data/mock_data.dart';
+import 'package:badgeup_mobile/models/album.dart';
+import 'package:badgeup_mobile/models/sticker.dart';
 import 'package:badgeup_mobile/theme/app_theme.dart';
 import 'package:badgeup_mobile/theme/theme_provider.dart';
 
@@ -86,8 +87,24 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('capture all screens', (WidgetTester tester) async {
-    final album = MockData.albums.first;
-    final sticker = MockData.stickers.firstWhere((s) => s.unlocked);
+    const sticker = Sticker(
+      id: 1,
+      name: 'Stub',
+      description: 'Sticker de prueba.',
+      rarity: Rarity.raro,
+      points: 10,
+      unlocked: true,
+      imageUrl: '',
+    );
+    final album = Album(
+      id: 1,
+      title: 'Album de prueba',
+      theme: 'Demo',
+      description: 'Album stub para capturas.',
+      coverUrl: '',
+      stickers: const [sticker],
+      stickersCount: 1,
+    );
 
     final screens = <(String, Widget)>[
       ('01_login', const LoginScreen()),
