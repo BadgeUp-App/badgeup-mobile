@@ -1,12 +1,11 @@
 import 'dart:io' show Platform;
 
 class ApiConfig {
+  static const String _envUrl = String.fromEnvironment('API_URL');
+
   static String get baseUrl {
-    // iOS simulator can reach the host via localhost.
-    // Android emulator needs 10.0.2.2 to reach the host machine.
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8000/api';
-    }
+    if (_envUrl.isNotEmpty) return _envUrl;
+    if (Platform.isAndroid) return 'http://10.0.2.2:8000/api';
     return 'http://localhost:8000/api';
   }
 
