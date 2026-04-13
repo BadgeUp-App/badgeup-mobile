@@ -46,12 +46,14 @@ class UserProfile {
 }
 
 class RankingEntry {
+  final int userId;
   final int rank;
   final String displayName;
   final String username;
   final int points;
 
   const RankingEntry({
+    required this.userId,
     required this.rank,
     required this.displayName,
     required this.username,
@@ -65,6 +67,7 @@ class RankingEntry {
     final display =
         full.isNotEmpty ? full : (json['username'] ?? '').toString();
     return RankingEntry(
+      userId: _asInt(json['id']),
       rank: rank,
       displayName: display,
       username: (json['username'] ?? '').toString(),

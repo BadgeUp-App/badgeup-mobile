@@ -33,6 +33,7 @@ class StickerLocationEntry {
   final String username;
   final double lat;
   final double lng;
+  final String? rarity;
   final DateTime? unlockedAt;
 
   const StickerLocationEntry({
@@ -43,6 +44,7 @@ class StickerLocationEntry {
     required this.username,
     required this.lat,
     required this.lng,
+    this.rarity,
     required this.unlockedAt,
   });
 
@@ -56,6 +58,7 @@ class StickerLocationEntry {
       username: (json['username'] ?? '').toString(),
       lat: _asDouble(json['location_lat']),
       lng: _asDouble(json['location_lng']),
+      rarity: json['rarity']?.toString(),
       unlockedAt: ts != null && ts.isNotEmpty ? DateTime.tryParse(ts) : null,
     );
   }

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/user_profile.dart';
 import '../services/content_api.dart';
 import '../theme/app_theme.dart';
+import 'public_profile_screen.dart';
 
 class RankingScreen extends StatefulWidget {
   const RankingScreen({super.key});
@@ -183,7 +184,17 @@ class _RankingScreenState extends State<RankingScreen> {
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               final entry = rest[index];
-                              return Container(
+                              return GestureDetector(
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => PublicProfileScreen(
+                                      userId: entry.userId,
+                                      username: entry.username,
+                                    ),
+                                  ),
+                                ),
+                                child: Container(
                                 margin: const EdgeInsets.only(bottom: 10),
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
@@ -268,6 +279,7 @@ class _RankingScreenState extends State<RankingScreen> {
                                     ),
                                   ],
                                 ),
+                              ),
                               );
                             },
                             childCount: rest.length,
@@ -354,7 +366,17 @@ class _PodiumColumn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final avatarSize = position == 1 ? 60.0 : 50.0;
-    return Column(
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PublicProfileScreen(
+            userId: entry.userId,
+            username: entry.username,
+          ),
+        ),
+      ),
+      child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
@@ -421,6 +443,7 @@ class _PodiumColumn extends StatelessWidget {
           ),
         ),
       ],
+    ),
     );
   }
 }

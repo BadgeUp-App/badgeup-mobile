@@ -146,6 +146,59 @@ class AuthService {
     return result;
   }
 
+  Future<String> requestPasswordReset(String email) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}/auth/password-reset/');
+    final resp = await (ApiClient.debugClient ?? http.Client())
+        .post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'email': email}),
+        )
+        .timeout(ApiConfig.timeout);
+
+    final data = jsonDecode(resp.body) as Map<String, dynamic>;
+    return data['detail'] as String? ?? 'Solicitud enviada.';
+  }
+
+  Future<String> confirmPasswordReset({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}/auth/password-reset/confirm/');
+    final resp = await (ApiClient.debugClient ?? http.Client())
+        .post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'email': email,
+            'code': code,
+            'new_password': newPassword,
+          }),
+        )
+        .timeout(ApiConfig.timeout);
+
+    final data = jsonDecode(resp.body) as Map<String, dynamic>;
+    if (resp.statusCode != 200) {
+      throw AuthException(data['detail'] as String? ?? 'Error al cambiar contrasena.');
+    }
+    return data['detail'] as String? ?? 'Contrasena actualizada.';
+  }
+
+  Future<String> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    final data = await ApiClient.instance.post('/auth/change-password/', {
+      'old_password': oldPassword,
+      'new_password': newPassword,
+    });
+    if (data is Map<String, dynamic>) {
+      return data['detail'] as String? ?? 'Contrasena actualizada.';
+    }
+    return 'Contrasena actualizada.';
+  }
+
   Future<void> logout() async {
     try {
       await _google.signOut();

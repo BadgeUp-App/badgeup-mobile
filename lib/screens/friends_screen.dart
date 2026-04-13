@@ -5,6 +5,7 @@ import '../models/friend_request.dart';
 import '../services/social_api.dart';
 import '../theme/app_theme.dart';
 import 'chat_screen.dart';
+import 'public_profile_screen.dart';
 
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
@@ -20,13 +21,15 @@ class _FriendsScreenState extends State<FriendsScreen>
 
   late Future<List<Member>> _membersFuture;
   late Future<List<FriendRequestModel>> _requestsFuture;
+  late Future<List<FriendRequestModel>> _sentRequestsFuture;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _membersFuture = SocialApi.instance.fetchMembers();
     _requestsFuture = SocialApi.instance.fetchFriendRequests(scope: 'received');
+    _sentRequestsFuture = SocialApi.instance.fetchFriendRequests(scope: 'sent');
     _searchController.addListener(() => setState(() {}));
   }
 
@@ -42,6 +45,8 @@ class _FriendsScreenState extends State<FriendsScreen>
       _membersFuture = SocialApi.instance.fetchMembers();
       _requestsFuture =
           SocialApi.instance.fetchFriendRequests(scope: 'received');
+      _sentRequestsFuture =
+          SocialApi.instance.fetchFriendRequests(scope: 'sent');
     });
   }
 
@@ -80,6 +85,42 @@ class _FriendsScreenState extends State<FriendsScreen>
     try {
       await SocialApi.instance.rejectFriendRequest(r.id);
       _snack('Solicitud rechazada');
+      await _reload();
+    } catch (e) {
+      _snack('Error: $e');
+    }
+  }
+
+  Future<void> _cancelRequest(FriendRequestModel r) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Cancelar solicitud',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Cancelar la solicitud enviada a ${r.toUser.displayName}?',
+          style: GoogleFonts.inter(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('No', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Si, cancelar',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await SocialApi.instance.cancelFriendRequest(r.id);
+      _snack('Solicitud cancelada');
       await _reload();
     } catch (e) {
       _snack('Error: $e');
@@ -183,6 +224,7 @@ class _FriendsScreenState extends State<FriendsScreen>
                     Tab(text: 'Comunidad'),
                     Tab(text: 'Amigos'),
                     Tab(text: 'Solicitudes'),
+                    Tab(text: 'Enviadas'),
                   ],
                 ),
               ),
@@ -207,6 +249,7 @@ class _FriendsScreenState extends State<FriendsScreen>
                   _buildMembersList(onlyFriends: false),
                   _buildMembersList(onlyFriends: true),
                   _buildRequestsList(),
+                  _buildSentRequestsList(),
                 ],
               ),
             ),
@@ -324,6 +367,98 @@ class _FriendsScreenState extends State<FriendsScreen>
     );
   }
 
+  Widget _buildSentRequestsList() {
+    return FutureBuilder<List<FriendRequestModel>>(
+      future: _sentRequestsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text('No se pudo cargar solicitudes enviadas.',
+                style: GoogleFonts.inter(
+                    fontSize: 13, color: AppTheme.onSurfaceVariant)),
+          );
+        }
+        final list = snapshot.data ?? const <FriendRequestModel>[];
+        if (list.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.surfaceContainerLow,
+                  ),
+                  child: Icon(Icons.send_rounded,
+                      size: 32, color: AppTheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 16),
+                Text('No tienes solicitudes enviadas',
+                    style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.onSurface)),
+              ],
+            ),
+          );
+        }
+        return RefreshIndicator(
+          onRefresh: _reload,
+          child: ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(24, 14, 24, 100),
+            itemCount: list.length,
+            itemBuilder: (_, i) => _sentRequestTile(list[i]),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _sentRequestTile(FriendRequestModel r) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          _avatar(r.toUser.displayName),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  r.toUser.displayName,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Solicitud pendiente',
+                  style: GoogleFonts.inter(
+                      fontSize: 11, color: AppTheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+          _pillButton('Cancelar', () => _cancelRequest(r), accent: true),
+        ],
+      ),
+    );
+  }
+
   Widget _memberTile(Member m) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -334,30 +469,59 @@ class _FriendsScreenState extends State<FriendsScreen>
       ),
       child: Row(
         children: [
-          _avatar(m.displayName),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PublicProfileScreen(
+                  userId: m.id,
+                  username: m.username,
+                ),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  m.displayName,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.onSurface,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${m.points} puntos',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    color: AppTheme.onSurfaceVariant,
-                  ),
-                ),
+                _avatar(m.displayName),
+                const SizedBox(width: 14),
               ],
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PublicProfileScreen(
+                    userId: m.id,
+                    username: m.username,
+                  ),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    m.displayName,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.onSurface,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${m.points} puntos',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: AppTheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           if (m.isFriend) ...[

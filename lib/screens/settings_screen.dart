@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../theme/theme_provider.dart';
 import '../theme/app_theme.dart';
+import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -181,10 +182,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               context,
               icon: Icons.lock_outline_rounded,
               label: 'Cambiar contrasena',
-              onTap: () => _infoDialog(
+              onTap: () => Navigator.push(
                 context,
-                'Cambiar contrasena',
-                'Se abrira el formulario para cambiar la contrasena. Funcionalidad pendiente.',
+                MaterialPageRoute(
+                  builder: (_) => const ChangePasswordScreen(),
+                ),
               ),
             ),
             _settingsTile(
