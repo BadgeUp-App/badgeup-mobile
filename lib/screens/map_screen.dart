@@ -19,8 +19,8 @@ class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
   late Future<List<StickerLocationEntry>> _future;
 
-  static const _defaultCenter = LatLng(20.6597, -103.3496);
-  static const double _defaultZoom = 12.0;
+  static const _worldCenter = LatLng(20.0, 0.0);
+  static const double _worldZoom = 2.2;
 
   @override
   void initState() {
@@ -67,19 +67,38 @@ class _MapScreenState extends State<MapScreen> {
     return '$day/$month/${d.year}';
   }
 
-  void _fitBounds(List<StickerLocationEntry> locations) {
-    if (locations.isEmpty) return;
-    final points = locations.map((l) => LatLng(l.lat, l.lng)).toList();
-    if (points.length == 1) {
-      _mapController.move(points.first, 14.0);
+  List<_LocationCluster> _buildClusters(List<StickerLocationEntry> locations) {
+    final buckets = <String, List<StickerLocationEntry>>{};
+    for (final loc in locations) {
+      final key =
+          '${loc.lat.toStringAsFixed(4)}_${loc.lng.toStringAsFixed(4)}';
+      buckets.putIfAbsent(key, () => []).add(loc);
+    }
+    return buckets.values.map((items) {
+      final avgLat =
+          items.map((e) => e.lat).reduce((a, b) => a + b) / items.length;
+      final avgLng =
+          items.map((e) => e.lng).reduce((a, b) => a + b) / items.length;
+      return _LocationCluster(
+        center: LatLng(avgLat, avgLng),
+        items: items,
+      );
+    }).toList();
+  }
+
+  void _fitBoundsFromClusters(List<_LocationCluster> clusters) {
+    if (clusters.isEmpty) return;
+    if (clusters.length == 1) {
+      _mapController.move(clusters.first.center, 12.0);
       return;
     }
+    final points = clusters.map((c) => c.center).toList();
     final bounds = LatLngBounds.fromPoints(points);
     _mapController.fitCamera(
       CameraFit.bounds(
         bounds: bounds,
-        padding: const EdgeInsets.all(50),
-        maxZoom: 16,
+        padding: const EdgeInsets.all(60),
+        maxZoom: 14,
       ),
     );
   }
@@ -187,6 +206,156 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  void _showClusterList(_LocationCluster cluster) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (_, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceContainerLowest,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: AppTheme.softShadow,
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.primary.withValues(alpha: 0.12),
+                      ),
+                      child: Icon(Icons.place_rounded,
+                          color: AppTheme.primary, size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${cluster.items.length} capturas aqui',
+                            style: GoogleFonts.poppins(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${cluster.center.latitude.toStringAsFixed(5)}, ${cluster.center.longitude.toStringAsFixed(5)}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: AppTheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 24),
+              Expanded(
+                child: ListView.separated(
+                  controller: scrollController,
+                  padding:
+                      const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  itemCount: cluster.items.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (_, i) {
+                    final loc = cluster.items[i];
+                    final c = _rarityColor(loc.rarity);
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showLocationDetail(loc);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: c,
+                              ),
+                              child: const Icon(
+                                Icons.emoji_events_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    loc.stickerName,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.onSurface,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '@${loc.username} - ${_rarityLabel(loc.rarity)}',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 11,
+                                      color: AppTheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(Icons.chevron_right_rounded,
+                                color: AppTheme.onSurfaceVariant),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _detailChip(String label, String value, Color accent) {
     return Expanded(
       child: Column(
@@ -216,29 +385,72 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  List<Marker> _buildMarkers(List<StickerLocationEntry> locations) {
-    return locations.map((loc) {
-      final color = _rarityColor(loc.rarity);
+  List<Marker> _buildMarkers(List<_LocationCluster> clusters) {
+    return clusters.map((cluster) {
+      final first = cluster.items.first;
+      final color = _rarityColor(first.rarity);
+      final count = cluster.items.length;
       return Marker(
-        point: LatLng(loc.lat, loc.lng),
-        width: 40,
-        height: 40,
+        point: cluster.center,
+        width: 48,
+        height: 48,
         child: GestureDetector(
-          onTap: () => _showLocationDetail(loc),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color,
-              border: Border.all(color: Colors.white, width: 2.5),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.4),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
+          onTap: () {
+            if (count > 1) {
+              _showClusterList(cluster);
+            } else {
+              _showLocationDetail(first);
+            }
+          },
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: color,
+                  border: Border.all(color: Colors.white, width: 2.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                child: const Icon(Icons.emoji_events_rounded,
+                    color: Colors.white, size: 18),
+              ),
+              if (count > 1)
+                Positioned(
+                  top: -4,
+                  right: -4,
+                  child: Container(
+                    constraints:
+                        const BoxConstraints(minWidth: 20, minHeight: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceContainerLowest,
+                      shape: BoxShape.rectangle,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: color, width: 1.5),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$count',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: color,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       );
@@ -256,21 +468,6 @@ class _MapScreenState extends State<MapScreen> {
               padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceContainerLowest,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: AppTheme.subtleLift,
-                      ),
-                      child: Icon(Icons.arrow_back_ios_new_rounded,
-                          size: 18, color: AppTheme.onSurface),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Text(
                     'Mapa de capturas',
                     style: GoogleFonts.poppins(
@@ -304,6 +501,7 @@ class _MapScreenState extends State<MapScreen> {
                 future: _future,
                 builder: (context, snapshot) {
                   final locations = snapshot.data ?? const <StickerLocationEntry>[];
+                  final clusters = _buildClusters(locations);
                   final loading = snapshot.connectionState == ConnectionState.waiting;
 
                   return Stack(
@@ -314,25 +512,18 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                         child: FlutterMap(
                           mapController: _mapController,
-                          options: MapOptions(
-                            initialCenter: _defaultCenter,
-                            initialZoom: _defaultZoom,
-                            minZoom: 3,
+                          options: const MapOptions(
+                            initialCenter: _worldCenter,
+                            initialZoom: _worldZoom,
+                            minZoom: 2,
                             maxZoom: 18,
-                            onMapReady: () {
-                              if (locations.isNotEmpty) {
-                                WidgetsBinding.instance.addPostFrameCallback((_) {
-                                  _fitBounds(locations);
-                                });
-                              }
-                            },
                           ),
                           children: [
                             TileLayer(
                               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                               userAgentPackageName: 'com.badgeup.mobile',
                             ),
-                            MarkerLayer(markers: _buildMarkers(locations)),
+                            MarkerLayer(markers: _buildMarkers(clusters)),
                           ],
                         ),
                       ),
@@ -363,7 +554,7 @@ class _MapScreenState extends State<MapScreen> {
                               Text(
                                 loading
                                     ? 'Cargando ubicaciones...'
-                                    : '${locations.length} capturas con ubicacion',
+                                    : '${locations.length} capturas en ${clusters.length} lugares',
                                 style: GoogleFonts.poppins(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -440,15 +631,15 @@ class _MapScreenState extends State<MapScreen> {
                         right: 16,
                         child: Column(
                           children: [
-                            if (locations.isNotEmpty)
+                            if (clusters.isNotEmpty)
                               _mapActionButton(
                                 Icons.fit_screen_rounded,
-                                () => _fitBounds(locations),
+                                () => _fitBoundsFromClusters(clusters),
                               ),
                             const SizedBox(height: 10),
                             _mapActionButton(
-                              Icons.my_location_rounded,
-                              () => _mapController.move(_defaultCenter, _defaultZoom),
+                              Icons.public_rounded,
+                              () => _mapController.move(_worldCenter, _worldZoom),
                             ),
                           ],
                         ),
@@ -479,4 +670,14 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
   }
+}
+
+class _LocationCluster {
+  final LatLng center;
+  final List<StickerLocationEntry> items;
+
+  const _LocationCluster({
+    required this.center,
+    required this.items,
+  });
 }

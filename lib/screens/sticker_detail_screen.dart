@@ -3,15 +3,113 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/sticker.dart';
+import '../services/content_api.dart';
 import '../theme/app_theme.dart';
 
-class StickerDetailScreen extends StatelessWidget {
+class StickerDetailScreen extends StatefulWidget {
   final Sticker sticker;
 
   const StickerDetailScreen({super.key, required this.sticker});
 
   @override
+  State<StickerDetailScreen> createState() => _StickerDetailScreenState();
+}
+
+class _StickerDetailScreenState extends State<StickerDetailScreen> {
+  late Sticker sticker;
+
+  @override
+  void initState() {
+    super.initState();
+    sticker = widget.sticker;
+    _loadFull();
+  }
+
+  Future<void> _loadFull() async {
+    try {
+      final full = await ContentApi.instance.fetchStickerDetail(sticker.id);
+      if (mounted) setState(() => sticker = full);
+    } catch (_) {}
+  }
+
+  String _formatDate(String? raw) {
+    if (raw == null || raw.isEmpty) return '';
+    final dt = DateTime.tryParse(raw);
+    if (dt == null) return raw;
+    final local = dt.toLocal();
+    final d = local.day.toString().padLeft(2, '0');
+    final m = local.month.toString().padLeft(2, '0');
+    final h = local.hour.toString().padLeft(2, '0');
+    final min = local.minute.toString().padLeft(2, '0');
+    return '$d/$m/${local.year} a las $h:$min';
+  }
+
+  Future<void> _showMessageDialog() async {
+    final controller = TextEditingController(text: sticker.userMessage ?? '');
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          'Tu nota',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w800),
+        ),
+        content: TextField(
+          controller: controller,
+          maxLines: 4,
+          maxLength: 280,
+          decoration: InputDecoration(
+            hintText: 'Escribe tus pensamientos...',
+            hintStyle: GoogleFonts.inter(color: AppTheme.onSurfaceVariant),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppTheme.outlineVariant),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+            ),
+          ),
+          style: GoogleFonts.inter(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancelar',
+                style: GoogleFonts.inter(
+                    color: AppTheme.onSurfaceVariant, fontWeight: FontWeight.w600)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: Text('Guardar',
+                style: GoogleFonts.inter(
+                    color: AppTheme.primary, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    if (result == null || !mounted) return;
+    try {
+      final updated = await ContentApi.instance.setStickerMessage(
+        stickerId: sticker.id,
+        message: result,
+      );
+      if (mounted) setState(() => sticker = updated);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al guardar: $e')),
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final hasPhoto = sticker.unlockedPhotoUrl != null &&
+        sticker.unlockedPhotoUrl!.isNotEmpty;
+
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: Stack(
@@ -21,7 +119,12 @@ class StickerDetailScreen extends StatelessWidget {
             child: CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(child: _TopBar()),
-                SliverToBoxAdapter(child: _HeroStickerPanel(sticker: sticker)),
+                SliverToBoxAdapter(
+                  child: _HeroPanel(
+                    sticker: sticker,
+                    showPhoto: hasPhoto,
+                  ),
+                ),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
@@ -48,6 +151,16 @@ class StickerDetailScreen extends StatelessWidget {
                             height: 1.05,
                           ),
                         ),
+                        if (sticker.albumTitle != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            sticker.albumTitle!,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: AppTheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         Text(
                           sticker.description,
@@ -62,116 +175,165 @@ class StickerDetailScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-                    child: Row(
-                      children: const [
-                        Expanded(
-                          child: _SpecTile(
-                            icon: Icons.speed_rounded,
-                            iconColor: AppTheme.secondary,
-                            iconBg: AppTheme.secondaryContainer,
-                            label: 'VEL. MAX',
-                            value: '293 km/h',
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: _SpecTile(
-                            icon: Icons.timer_rounded,
-                            iconColor: AppTheme.tertiary,
-                            iconBg: AppTheme.tertiaryContainer,
-                            label: '0-100 KM/H',
-                            value: '4.2s',
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: _SpecTile(
-                            icon: Icons.bolt_rounded,
-                            iconColor: AppTheme.primaryContainer,
-                            iconBg: Color(0x33007AFF),
-                            label: 'POTENCIA',
-                            value: '385 HP',
-                          ),
-                        ),
-                      ],
+                if (sticker.funFact != null && sticker.funFact!.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                      child: _DatoCuriosoCard(text: sticker.funFact!),
                     ),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                    child: _DatoCuriosoCard(text: sticker.description),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                if (sticker.userMessage != null &&
+                    sticker.userMessage!.isNotEmpty)
+                  SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 12),
-                      child: Text(
-                        'DETALLES TECNICOS',
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 2.0,
-                          color: AppTheme.onSurfaceVariant,
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                      child: GestureDetector(
+                        onTap: _showMessageDialog,
+                        child: Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.edit_note_rounded,
+                                  color: AppTheme.primary, size: 22),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Tu nota',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      sticker.userMessage!,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        color: AppTheme.onSurfaceVariant,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
-                    child: _TechnicalTable(
-                      rows: [
-                        _TechRow(
-                          icon: Icons.settings_rounded,
-                          label: 'Motor',
-                          value: 'Boxer trasero',
-                        ),
-                        const _TechRow(
-                          icon: Icons.sync_alt_rounded,
-                          label: 'Transmision',
-                          value: '8 vel. PDK',
-                        ),
-                        _TechRow(
-                          icon: Icons.local_gas_station_rounded,
-                          label: 'Consumo',
-                          value: '9.4 l/100km',
-                        ),
-                        if (sticker.captureLocation != null)
-                          _TechRow(
-                            icon: Icons.place_rounded,
-                            label: 'Ubicacion',
-                            value: sticker.captureLocation!,
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceContainerLowest,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        children: [
+                          if (sticker.captureDate != null)
+                            _techRow(
+                              Icons.calendar_today_rounded,
+                              'Capturado',
+                              _formatDate(sticker.captureDate),
+                              even: true,
+                            ),
+                          if (sticker.captureLocation != null &&
+                              sticker.captureLocation!.isNotEmpty)
+                            _techRow(
+                              Icons.place_rounded,
+                              'Ubicacion',
+                              sticker.captureLocation!,
+                              even: sticker.captureDate == null,
+                            ),
+                          _techRow(
+                            Icons.workspace_premium_rounded,
+                            'Puntos',
+                            '${sticker.points} pts',
+                            even: false,
                           ),
-                        if (sticker.captureDate != null)
-                          _TechRow(
-                            icon: Icons.calendar_today_rounded,
-                            label: 'Capturado',
-                            value: sticker.captureDate!,
+                          _techRow(
+                            Icons.diamond_rounded,
+                            'Rareza',
+                            _rarityLabel(sticker.rarity),
+                            even: true,
                           ),
-                        _TechRow(
-                          icon: Icons.workspace_premium_rounded,
-                          label: 'Puntos',
-                          value: '${sticker.points} pts',
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 160)),
+                const SliverToBoxAdapter(child: SizedBox(height: 140)),
               ],
             ),
           ),
-          _FloatingActionTray(sticker: sticker),
+          _FloatingActionTray(
+            sticker: sticker,
+            onNoteTap: _showMessageDialog,
+          ),
         ],
       ),
     );
+  }
+
+  Widget _techRow(IconData icon, String label, String value,
+      {required bool even}) {
+    return Container(
+      color: even
+          ? AppTheme.surfaceContainerLow.withValues(alpha: 0.5)
+          : AppTheme.surfaceContainerLowest,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppTheme.onSurfaceVariant),
+          const SizedBox(width: 14),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.onSurface,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: AppTheme.onSurfaceVariant,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _rarityLabel(Rarity r) {
+    switch (r) {
+      case Rarity.legendario:
+        return 'Legendario';
+      case Rarity.epico:
+        return 'Epico';
+      case Rarity.raro:
+        return 'Raro';
+      case Rarity.comun:
+        return 'Comun';
+    }
   }
 }
 
@@ -198,7 +360,7 @@ class _TopBar extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            'Overview',
+            'Detalle',
             style: GoogleFonts.inter(
               fontSize: 17,
               fontWeight: FontWeight.w700,
@@ -206,27 +368,16 @@ class _TopBar extends StatelessWidget {
               color: AppTheme.onSurface,
             ),
           ),
-          const Spacer(),
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: AppTheme.subtleLift,
-            ),
-            child: Icon(Icons.ios_share_rounded,
-                color: AppTheme.onSurface, size: 18),
-          ),
         ],
       ),
     );
   }
 }
 
-class _HeroStickerPanel extends StatelessWidget {
-  const _HeroStickerPanel({required this.sticker});
+class _HeroPanel extends StatelessWidget {
+  const _HeroPanel({required this.sticker, required this.showPhoto});
   final Sticker sticker;
+  final bool showPhoto;
 
   @override
   Widget build(BuildContext context) {
@@ -234,90 +385,79 @@ class _HeroStickerPanel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
       child: AspectRatio(
         aspectRatio: 1,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(36),
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFF6D9FF),
-                  Color(0xFFE9FFE5),
-                ],
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Hero(
+                tag: 'sticker_${sticker.id}',
+                child: CachedNetworkImage(
+                  imageUrl: showPhoto
+                      ? sticker.unlockedPhotoUrl!
+                      : sticker.imageUrl,
+                  fit: showPhoto ? BoxFit.cover : BoxFit.contain,
+                  imageBuilder: (context, provider) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(36),
+                        image: DecorationImage(
+                          image: provider,
+                          fit: showPhoto ? BoxFit.cover : BoxFit.contain,
+                        ),
+                      ),
+                    );
+                  },
+                  placeholder: (_, __) => Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(36),
+                    ),
+                  ),
+                  errorWidget: (_, __, ___) => Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(36),
+                    ),
+                    child: Icon(Icons.emoji_events_rounded,
+                        size: 80, color: AppTheme.onSurfaceVariant),
+                  ),
+                ),
               ),
             ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -60,
-                  right: -60,
-                  child: IgnorePointer(
-                    child: ImageFiltered(
-                      imageFilter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-                      child: Container(
-                        width: 240,
-                        height: 240,
-                        decoration: BoxDecoration(
-                          color: AppTheme.secondary.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
+            Positioned(
+              top: 18,
+              right: 18,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.workspace_premium_rounded,
+                            color: AppTheme.secondary, size: 14),
+                        const SizedBox(width: 6),
+                        Text(
+                          _rarityLabel(sticker.rarity),
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.6,
+                            color: AppTheme.onSurface,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(28),
-                  child: Hero(
-                    tag: 'sticker_${sticker.id}',
-                    child: CachedNetworkImage(
-                      imageUrl: sticker.imageUrl,
-                      fit: BoxFit.contain,
-                      placeholder: (_, __) => const SizedBox.shrink(),
-                      errorWidget: (_, __, ___) => Icon(
-                        Icons.directions_car_rounded,
-                        size: 80,
-                        color: AppTheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 18,
-                  right: 18,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.55),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.workspace_premium_rounded,
-                                color: AppTheme.secondary, size: 14),
-                            const SizedBox(width: 6),
-                            Text(
-                              _rarityLabel(sticker.rarity),
-                              style: GoogleFonts.inter(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.6,
-                                color: AppTheme.onSurface,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -326,73 +466,14 @@ class _HeroStickerPanel extends StatelessWidget {
   String _rarityLabel(Rarity r) {
     switch (r) {
       case Rarity.legendario:
-        return 'LEGENDARY';
+        return 'LEGENDARIO';
       case Rarity.epico:
-        return 'EPIC';
+        return 'EPICO';
       case Rarity.raro:
-        return 'RARE';
+        return 'RARO';
       case Rarity.comun:
-        return 'COMMON';
+        return 'COMUN';
     }
-  }
-}
-
-class _SpecTile extends StatelessWidget {
-  const _SpecTile({
-    required this.icon,
-    required this.iconColor,
-    required this.iconBg,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final Color iconColor;
-  final Color iconBg;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: iconBg,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: iconColor, size: 22),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.4,
-              color: AppTheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: GoogleFonts.inter(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.onSurface,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -427,16 +508,16 @@ class _DatoCuriosoCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: AppTheme.secondaryContainer,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.lightbulb_rounded,
-                    color: AppTheme.secondary, size: 28),
+                    color: AppTheme.secondary, size: 24),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -469,66 +550,10 @@ class _DatoCuriosoCard extends StatelessWidget {
   }
 }
 
-class _TechnicalTable extends StatelessWidget {
-  const _TechnicalTable({required this.rows});
-  final List<_TechRow> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          for (int i = 0; i < rows.length; i++)
-            Container(
-              color: i.isEven
-                  ? AppTheme.surfaceContainerLow.withValues(alpha: 0.5)
-                  : AppTheme.surfaceContainerLowest,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-              child: Row(
-                children: [
-                  Icon(rows[i].icon,
-                      size: 18, color: AppTheme.onSurfaceVariant),
-                  const SizedBox(width: 14),
-                  Text(
-                    rows[i].label,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.onSurface,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    rows[i].value,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: AppTheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TechRow {
-  final IconData icon;
-  final String label;
-  final String value;
-  const _TechRow({required this.icon, required this.label, required this.value});
-}
-
 class _FloatingActionTray extends StatelessWidget {
-  const _FloatingActionTray({required this.sticker});
+  const _FloatingActionTray({required this.sticker, required this.onNoteTap});
   final Sticker sticker;
+  final VoidCallback onNoteTap;
 
   @override
   Widget build(BuildContext context) {
@@ -577,23 +602,10 @@ class _FloatingActionTray extends StatelessWidget {
                 ),
                 const Spacer(),
                 GestureDetector(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: AppTheme.onSurface,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                        content: Text(
-                          'Sticker guardado en el album',
-                          style: GoogleFonts.inter(
-                              fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    );
-                  },
+                  onTap: onNoteTap,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 22, vertical: 14),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(999),
                       gradient: const LinearGradient(
@@ -606,13 +618,21 @@ class _FloatingActionTray extends StatelessWidget {
                       ),
                       boxShadow: AppTheme.subtleLift,
                     ),
-                    child: Text(
-                      'Anadir al album',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.onPastelPeach,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.edit_rounded,
+                            size: 16, color: AppTheme.onPastelPeach),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Escribir nota',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.onPastelPeach,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

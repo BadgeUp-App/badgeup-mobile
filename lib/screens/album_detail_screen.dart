@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/album.dart';
 import '../models/sticker.dart';
 import '../services/content_api.dart';
+import '../services/user_session.dart';
 import '../theme/app_theme.dart';
 import 'edit_album_screen.dart';
 import 'sticker_detail_screen.dart';
@@ -27,9 +28,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   void initState() {
     super.initState();
     album = widget.album;
-    if (album.stickers.isEmpty) {
-      _loadDetail();
-    }
+    _loadDetail();
   }
 
   Future<void> _loadDetail() async {
@@ -92,6 +91,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
               slivers: [
                 SliverToBoxAdapter(
                   child: _TopBar(
+                    canEdit: UserSession.instance.user?.isStaff == true,
                     onEdit: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => EditAlbumScreen(album: album)),
@@ -195,8 +195,9 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.onEdit});
+  const _TopBar({required this.onEdit, required this.canEdit});
   final VoidCallback onEdit;
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -229,32 +230,34 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: onEdit,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: AppTheme.subtleLift,
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.edit_rounded,
-                      color: AppTheme.primary, size: 15),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Editar',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primary,
+          if (canEdit)
+            GestureDetector(
+              onTap: onEdit,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceContainerLowest,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: AppTheme.subtleLift,
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.edit_rounded,
+                        color: AppTheme.primary, size: 15),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Editar',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -416,72 +419,86 @@ class _GridStickerTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: sticker.unlocked
-                    ? AppTheme.surfaceContainerLowest
-                    : AppTheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(22),
-                border: sticker.unlocked
-                    ? Border.all(color: accent, width: 2)
-                    : null,
-                boxShadow: sticker.unlocked ? AppTheme.subtleLift : null,
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (sticker.unlocked)
-                      CachedNetworkImage(
-                        imageUrl: sticker.imageUrl,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => Container(
-                          color: AppTheme.surfaceContainerHigh,
-                        ),
-                        errorWidget: (_, __, ___) => Container(
-                          color: AppTheme.surfaceContainerHigh,
-                          child: Icon(Icons.directions_car_rounded,
+            child: sticker.unlocked
+                ? Stack(
+                    children: [
+                      Positioned.fill(
+                        child: CachedNetworkImage(
+                          imageUrl: sticker.imageUrl,
+                          fit: BoxFit.contain,
+                          placeholder: (_, __) => const SizedBox.shrink(),
+                          errorWidget: (_, __, ___) => Icon(
+                              Icons.emoji_events_rounded,
                               color: AppTheme.onSurfaceVariant, size: 28),
                         ),
-                      )
-                    else
-                      Container(
-                        color: AppTheme.surfaceContainerHigh.withValues(alpha: 0.4),
-                        child: Center(
-                          child: Icon(Icons.lock_rounded,
-                              size: 28,
-                              color: AppTheme.outlineVariant),
-                        ),
                       ),
-                    Positioned(
-                      left: 6,
-                      bottom: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: sticker.unlocked
-                              ? accent.withValues(alpha: 0.92)
-                              : AppTheme.onSurfaceVariant.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          idLabel,
-                          style: GoogleFonts.inter(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                            color: sticker.unlocked
-                                ? _onAccent(sticker.rarity)
-                                : AppTheme.onSurfaceVariant.withValues(alpha: 0.5),
+                      Positioned(
+                        left: 4,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.92),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            idLabel,
+                            style: GoogleFonts.inter(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: _onAccent(sticker.rarity),
+                            ),
                           ),
                         ),
                       ),
+                    ],
+                  )
+                : Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(22),
                     ),
-                  ],
-                ),
-              ),
-            ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Container(
+                            color: AppTheme.surfaceContainerHigh
+                                .withValues(alpha: 0.4),
+                            child: Center(
+                              child: Icon(Icons.lock_rounded,
+                                  size: 28, color: AppTheme.outlineVariant),
+                            ),
+                          ),
+                          Positioned(
+                            left: 6,
+                            bottom: 6,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppTheme.onSurfaceVariant
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                idLabel,
+                                style: GoogleFonts.inter(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.onSurfaceVariant
+                                      .withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
           ),
           const SizedBox(height: 8),
           Text(

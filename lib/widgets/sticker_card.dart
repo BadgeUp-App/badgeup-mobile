@@ -50,7 +50,7 @@ class StickerCard extends StatelessWidget {
                           ),
                           errorWidget: (_, __, ___) => Container(
                             color: Colors.grey[200],
-                            child: const Icon(Icons.directions_car, size: 40, color: Colors.grey),
+                            child: const Icon(Icons.emoji_events_rounded, size: 40, color: Colors.grey),
                           ),
                         ),
                       )
