@@ -1,17 +1,17 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../models/album.dart';
 import '../services/content_api.dart';
+import '../services/location_service.dart';
+import '../services/sound_service.dart';
 import '../theme/app_theme.dart';
 
 class CaptureScreen extends StatefulWidget {
-  const CaptureScreen({super.key, this.initialAlbum});
-
-  final Album? initialAlbum;
+  const CaptureScreen({super.key});
 
   @override
   State<CaptureScreen> createState() => _CaptureScreenState();
@@ -23,10 +23,8 @@ class _CaptureScreenState extends State<CaptureScreen>
   final _picker = ImagePicker();
 
   bool _processing = false;
+  bool _didUnlock = false;
   File? _lastPhoto;
-  Album? _selectedAlbum;
-  List<Album> _albums = const [];
-  bool _loadingAlbums = true;
 
   @override
   void initState() {
@@ -35,23 +33,6 @@ class _CaptureScreenState extends State<CaptureScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
-    _selectedAlbum = widget.initialAlbum;
-    _loadAlbums();
-  }
-
-  Future<void> _loadAlbums() async {
-    try {
-      final list = await ContentApi.instance.fetchAlbums();
-      if (!mounted) return;
-      setState(() {
-        _albums = list;
-        _loadingAlbums = false;
-        _selectedAlbum ??= list.isNotEmpty ? list.first : null;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loadingAlbums = false);
-    }
   }
 
   @override
@@ -60,16 +41,11 @@ class _CaptureScreenState extends State<CaptureScreen>
     super.dispose();
   }
 
-  Future<void> _pickFromCamera() => _pickAndMatch(ImageSource.camera);
-  Future<void> _pickFromGallery() => _pickAndMatch(ImageSource.gallery);
+  Future<void> _pickFromCamera() => _pickAndScan(ImageSource.camera);
+  Future<void> _pickFromGallery() => _pickAndScan(ImageSource.gallery);
 
-  Future<void> _pickAndMatch(ImageSource source) async {
+  Future<void> _pickAndScan(ImageSource source) async {
     if (_processing) return;
-    final album = _selectedAlbum;
-    if (album == null) {
-      _snack('Primero selecciona un album.');
-      return;
-    }
     XFile? picked;
     try {
       picked = await _picker.pickImage(
@@ -90,9 +66,11 @@ class _CaptureScreenState extends State<CaptureScreen>
     });
 
     try {
-      final result = await ContentApi.instance.matchAlbumPhoto(
-        albumId: album.id,
+      final position = await LocationService.instance.getCurrentPosition();
+      final result = await ContentApi.instance.scanPhoto(
         photo: _lastPhoto!,
+        lat: position?.latitude,
+        lng: position?.longitude,
       );
       if (!mounted) return;
       _showResult(result);
@@ -105,6 +83,11 @@ class _CaptureScreenState extends State<CaptureScreen>
   }
 
   void _showResult(MatchPhotoResult r) {
+    if (r.unlocked) {
+      SoundService.instance.playUnlockSound();
+      HapticFeedback.heavyImpact();
+      _didUnlock = true;
+    }
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -121,7 +104,7 @@ class _CaptureScreenState extends State<CaptureScreen>
             children: [
               if (r.stickerName != null)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
                     r.stickerName!,
                     style: GoogleFonts.inter(
@@ -130,24 +113,51 @@ class _CaptureScreenState extends State<CaptureScreen>
                     ),
                   ),
                 ),
-              Text(
-                r.message.isNotEmpty ? r.message : '—',
-                style: GoogleFonts.inter(color: AppTheme.onSurfaceVariant),
-              ),
-              if (r.carMake != null || r.carModel != null) ...[
-                const SizedBox(height: 10),
-                Text(
-                  'Detectado: ${[r.carMake, r.carModel].where((e) => e != null && e.isNotEmpty).join(' ')}',
-                  style: GoogleFonts.inter(
-                      fontSize: 12, color: AppTheme.onSurfaceVariant),
+              if (r.albumTitle != null && r.unlocked)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'Album: ${r.albumTitle}',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: AppTheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
+              if (r.detectedItem != null && r.detectedItem!.isNotEmpty) ...[
+                Text(
+                  'Detectado: ${r.detectedItem}',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AppTheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
               ],
+              if (!r.unlocked && r.detectedItem == null)
+                Text(
+                  r.message.isNotEmpty ? r.message : '---',
+                  style: GoogleFonts.inter(color: AppTheme.onSurfaceVariant),
+                ),
               if (r.funFact != null && r.funFact!.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Text(
                   r.funFact!,
                   style: GoogleFonts.inter(
                       fontSize: 12, color: AppTheme.onSurfaceVariant),
+                ),
+              ],
+              if (!r.unlocked &&
+                  r.detectedItem != null &&
+                  r.stickerName == null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  r.message,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.onSurface,
+                  ),
                 ),
               ],
               if (r.matchScore > 0) ...[
@@ -162,6 +172,18 @@ class _CaptureScreenState extends State<CaptureScreen>
           ),
         ),
         actions: [
+          if (r.unlocked && r.stickerId != null)
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _showThoughtsDialog(r.stickerId!);
+              },
+              child: Text(
+                'Escribir nota',
+                style: GoogleFonts.inter(
+                    color: AppTheme.secondary, fontWeight: FontWeight.w700),
+              ),
+            ),
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
@@ -175,6 +197,64 @@ class _CaptureScreenState extends State<CaptureScreen>
     );
   }
 
+  Future<void> _showThoughtsDialog(int stickerId) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          'Tus pensamientos',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w800),
+        ),
+        content: TextField(
+          controller: controller,
+          maxLines: 4,
+          maxLength: 280,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'Que sentiste al capturar este sticker?',
+            hintStyle: GoogleFonts.inter(
+                color: AppTheme.onSurfaceVariant, fontSize: 13),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppTheme.outlineVariant),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+            ),
+          ),
+          style: GoogleFonts.inter(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Saltar',
+                style: GoogleFonts.inter(
+                    color: AppTheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: Text('Guardar',
+                style: GoogleFonts.inter(
+                    color: AppTheme.primary, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    if (result == null || result.isEmpty || !mounted) return;
+    try {
+      await ContentApi.instance.setStickerMessage(
+        stickerId: stickerId,
+        message: result,
+      );
+      _snack('Nota guardada');
+    } catch (_) {}
+  }
+
   void _snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -185,43 +265,14 @@ class _CaptureScreenState extends State<CaptureScreen>
     );
   }
 
-  Future<void> _openAlbumPicker() async {
-    if (_albums.isEmpty) return;
-    final picked = await showModalBottomSheet<Album>(
-      context: context,
-      backgroundColor: AppTheme.surfaceContainerLowest,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: _albums.length,
-            itemBuilder: (_, i) {
-              final a = _albums[i];
-              return ListTile(
-                title: Text(a.title,
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
-                subtitle: Text(a.theme,
-                    style: GoogleFonts.inter(
-                        fontSize: 12, color: AppTheme.onSurfaceVariant)),
-                trailing: _selectedAlbum?.id == a.id
-                    ? const Icon(Icons.check_rounded, color: AppTheme.primary)
-                    : null,
-                onTap: () => Navigator.pop(ctx, a),
-              );
-            },
-          ),
-        );
-      },
-    );
-    if (picked != null) setState(() => _selectedAlbum = picked);
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) Navigator.pop(context, _didUnlock);
+      },
+      child: Scaffold(
       backgroundColor: const Color(0xFF0C0E12),
       body: SafeArea(
         child: Stack(
@@ -263,7 +314,7 @@ class _CaptureScreenState extends State<CaptureScreen>
                               ),
                               const SizedBox(height: 10),
                               Text(
-                                'Apunta al carro',
+                                'Toma una foto',
                                 style: GoogleFonts.inter(
                                   color: Colors.white.withValues(alpha: 0.7),
                                   fontSize: 14,
@@ -274,45 +325,10 @@ class _CaptureScreenState extends State<CaptureScreen>
                           ),
                   ),
                   const SizedBox(height: 14),
-                  GestureDetector(
-                    onTap: _openAlbumPicker,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.collections_bookmark_rounded,
-                              size: 14,
-                              color: Colors.white.withValues(alpha: 0.65)),
-                          const SizedBox(width: 6),
-                          Text(
-                            _loadingAlbums
-                                ? 'Cargando albums...'
-                                : (_selectedAlbum?.title ?? 'Sin albums'),
-                            style: GoogleFonts.inter(
-                              color: Colors.white.withValues(alpha: 0.85),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(Icons.keyboard_arrow_down_rounded,
-                              size: 16,
-                              color: Colors.white.withValues(alpha: 0.65)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
                   Text(
                     _processing
                         ? 'Analizando foto con IA...'
-                        : 'Toma una foto y la IA validara el sticker.',
+                        : 'La IA buscara un sticker en todos los albums.',
                     style: GoogleFonts.inter(
                       color: Colors.white.withValues(alpha: 0.45),
                       fontSize: 12,
@@ -325,7 +341,7 @@ class _CaptureScreenState extends State<CaptureScreen>
               top: 12,
               left: 16,
               child: GestureDetector(
-                onTap: () => Navigator.pop(context),
+                onTap: () => Navigator.pop(context, _didUnlock),
                 child: Container(
                   width: 44,
                   height: 44,
@@ -407,6 +423,7 @@ class _CaptureScreenState extends State<CaptureScreen>
           ],
         ),
       ),
+    ),
     );
   }
 }

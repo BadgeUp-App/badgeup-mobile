@@ -113,21 +113,22 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                           ),
                         ),
                         const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            'Modelos clasicos',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.onSurfaceVariant,
+                        if (album.theme.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              album.theme,
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.onSurfaceVariant,
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),

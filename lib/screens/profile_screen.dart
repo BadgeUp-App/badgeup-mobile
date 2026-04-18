@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/album.dart';
+import '../models/capture_entry.dart';
+import '../models/sticker.dart';
 import '../models/user_profile.dart';
 import '../services/auth_service.dart';
 import '../services/content_api.dart';
 import '../services/user_session.dart';
 import '../theme/app_theme.dart';
 import 'edit_profile_screen.dart';
+import 'map_screen.dart';
 import 'settings_screen.dart';
 import 'friends_screen.dart';
 import 'ranking_screen.dart';
@@ -25,18 +28,20 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late Future<List<Album>> _albumsFuture;
+  late Future<List<StickerLocationEntry>> _locationsFuture;
 
   @override
   void initState() {
     super.initState();
     _albumsFuture = ContentApi.instance.fetchAlbums();
-    // Refresh the in-memory profile in the background.
+    _locationsFuture = ContentApi.instance.fetchStickerLocations();
     UserSession.instance.refresh();
   }
 
   Future<void> _reload() async {
     setState(() {
       _albumsFuture = ContentApi.instance.fetchAlbums();
+      _locationsFuture = ContentApi.instance.fetchStickerLocations();
     });
     await UserSession.instance.refresh();
   }
@@ -369,6 +374,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 28),
+                    _MapPreview(locationsFuture: _locationsFuture),
                     const SizedBox(height: 30),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -672,6 +679,194 @@ class _QuickAction extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: AppTheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MapPreview extends StatelessWidget {
+  const _MapPreview({required this.locationsFuture});
+  final Future<List<StickerLocationEntry>> locationsFuture;
+
+  Color _rarityColor(String? rarity) {
+    switch (rarityFromString(rarity)) {
+      case Rarity.legendario:
+        return const Color(0xFFF59E0B);
+      case Rarity.epico:
+        return const Color(0xFF8B5CF6);
+      case Rarity.raro:
+        return const Color(0xFF3B82F6);
+      case Rarity.comun:
+        return const Color(0xFF9CA3AF);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Mapa de capturas',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MapScreen()),
+            ),
+            child: FutureBuilder<List<StickerLocationEntry>>(
+              future: locationsFuture,
+              builder: (context, snapshot) {
+                final locs = snapshot.data ?? const <StickerLocationEntry>[];
+                final loading =
+                    snapshot.connectionState == ConnectionState.waiting;
+
+                return Container(
+                  height: 160,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF1A1D23),
+                        Color(0xFF2A2D35),
+                      ],
+                    ),
+                    boxShadow: AppTheme.subtleLift,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        right: -20,
+                        top: -20,
+                        child: Icon(
+                          Icons.map_rounded,
+                          size: 140,
+                          color: Colors.white.withValues(alpha: 0.04),
+                        ),
+                      ),
+                      if (locs.isNotEmpty)
+                        Positioned(
+                          top: 16,
+                          left: 16,
+                          right: 80,
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: locs.take(12).map((loc) {
+                              return Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _rarityColor(loc.rarity),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      Positioned(
+                        top: 14,
+                        right: 16,
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.open_in_full_rounded,
+                            size: 18,
+                            color: Colors.white54,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 16,
+                        left: 16,
+                        right: 16,
+                        child: Row(
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: locs.isNotEmpty
+                                            ? const Color(0xFF22C55E)
+                                            : Colors.white38,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      loading
+                                          ? 'Cargando...'
+                                          : '${locs.length} capturas con GPS',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Toca para ver el mapa completo',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.pastelPeach,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                'Ver mapa',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.onPastelPeach,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],

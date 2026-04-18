@@ -127,6 +127,36 @@ class _FriendsScreenState extends State<FriendsScreen>
     }
   }
 
+  Future<void> _cancelSentRequest(Member m) async {
+    final requestId = m.friendRequestId;
+    if (requestId == null) {
+      _snack('No se encontro la solicitud');
+      return;
+    }
+    try {
+      await SocialApi.instance.cancelFriendRequest(requestId);
+      _snack('Solicitud cancelada');
+      await _reload();
+    } catch (e) {
+      _snack('Error: $e');
+    }
+  }
+
+  Future<void> _acceptFromMember(Member m) async {
+    final requestId = m.friendRequestId;
+    if (requestId == null) {
+      _snack('No se encontro la solicitud');
+      return;
+    }
+    try {
+      await SocialApi.instance.acceptFriendRequest(requestId);
+      _snack('Solicitud aceptada');
+      await _reload();
+    } catch (e) {
+      _snack('Error: $e');
+    }
+  }
+
   Future<void> _removeFriend(Member m) async {
     final requestId = m.friendRequestId;
     if (requestId == null) return;
@@ -528,6 +558,10 @@ class _FriendsScreenState extends State<FriendsScreen>
             _pillButton('Chat', () => _openChat(m), accent: false),
             const SizedBox(width: 6),
             _pillButton('Quitar', () => _removeFriend(m), accent: true),
+          ] else if (m.relationshipStatus == 'request_sent') ...[
+            _pillButton('Cancelar', () => _cancelSentRequest(m), accent: false),
+          ] else if (m.relationshipStatus == 'request_received') ...[
+            _pillButton('Aceptar', () => _acceptFromMember(m), accent: true),
           ] else ...[
             _pillButton('Agregar', () => _sendRequest(m), accent: true),
           ],

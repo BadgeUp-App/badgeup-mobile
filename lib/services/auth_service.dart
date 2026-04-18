@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
@@ -31,38 +32,34 @@ class AuthService {
     scopes: const ['email', 'profile', 'openid'],
   );
 
+  FirebaseAuth get _firebase => FirebaseAuth.instance;
+
   Future<AuthResult> login({
     required String username,
     required String password,
   }) async {
-    final uri = Uri.parse('${ApiConfig.baseUrl}/auth/login/');
-    final resp = await (ApiClient.debugClient ?? http.Client())
-        .post(
-          uri,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'username': username, 'password': password}),
-        )
-        .timeout(ApiConfig.timeout);
+    final email = username.trim();
+    try {
+      await _firebase.signOut();
+    } catch (_) {}
 
-    if (resp.statusCode != 200) {
-      throw AuthException(_extractError(resp, fallback: 'Credenciales invalidas.'));
+    UserCredential cred;
+    try {
+      cred = await _firebase.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_firebaseErrorToMessage(e));
+    } catch (e) {
+      throw AuthException('Error al iniciar sesion: $e');
     }
 
-    final data = jsonDecode(resp.body) as Map<String, dynamic>;
-    final result = AuthResult(
-      access: data['access'] as String,
-      refresh: data['refresh'] as String,
-      user: data['user'] is Map<String, dynamic>
-          ? data['user'] as Map<String, dynamic>
-          : null,
-    );
-    await TokenStorage.save(
-      access: result.access,
-      refresh: result.refresh,
-      user: result.user,
-    );
-    UserSession.instance.setFromJson(result.user);
-    return result;
+    final idToken = await cred.user?.getIdToken();
+    if (idToken == null) {
+      throw AuthException('Firebase no devolvio un token.');
+    }
+    return _exchangeFirebaseToken(idToken);
   }
 
   Future<AuthResult> register({
@@ -73,59 +70,106 @@ class AuthService {
     String firstName = '',
     String lastName = '',
   }) async {
-    final uri = Uri.parse('${ApiConfig.baseUrl}/auth/register/');
-    final resp = await (ApiClient.debugClient ?? http.Client())
-        .post(
-          uri,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'username': username,
-            'email': email,
-            'password': password,
-            'password_confirm': passwordConfirm,
-            'first_name': firstName,
-            'last_name': lastName,
-          }),
-        )
-        .timeout(ApiConfig.timeout);
+    if (password != passwordConfirm) {
+      throw AuthException('Las contrasenas no coinciden.');
+    }
+    try {
+      await _firebase.signOut();
+    } catch (_) {}
 
-    if (resp.statusCode != 201) {
-      throw AuthException(_extractError(resp, fallback: 'No se pudo crear la cuenta.'));
+    UserCredential cred;
+    try {
+      cred = await _firebase.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_firebaseErrorToMessage(e));
+    } catch (e) {
+      throw AuthException('Error al crear la cuenta: $e');
     }
 
-    // Backend returns the user but not tokens, so log in right after.
-    return login(username: username, password: password);
+    final displayName = [firstName, lastName]
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .join(' ');
+    if (displayName.isNotEmpty) {
+      try {
+        await cred.user?.updateDisplayName(displayName);
+        await cred.user?.reload();
+      } catch (_) {}
+    }
+
+    final idToken = await _firebase.currentUser?.getIdToken(true);
+    if (idToken == null) {
+      throw AuthException('Firebase no devolvio un token despues de registrar.');
+    }
+    return _exchangeFirebaseToken(idToken);
   }
 
   Future<AuthResult> signInWithGoogle() async {
-    GoogleSignInAccount? account;
     try {
-      account = await _google.signIn();
+      try {
+        await _google.signOut();
+      } catch (_) {}
+
+      GoogleSignInAccount? account;
+      try {
+        account = await _google.signIn();
+      } catch (e) {
+        throw AuthException('Error iniciando Google: $e');
+      }
+      if (account == null) {
+        throw AuthException('Inicio de sesion con Google cancelado.');
+      }
+
+      final gAuth = await account.authentication;
+      if (gAuth.idToken == null) {
+        throw AuthException('Google no devolvio idToken. Revisa la config del client ID.');
+      }
+      final credential = GoogleAuthProvider.credential(
+        accessToken: gAuth.accessToken,
+        idToken: gAuth.idToken,
+      );
+
+      try {
+        await _firebase.signOut();
+      } catch (_) {}
+
+      UserCredential cred;
+      try {
+        cred = await _firebase.signInWithCredential(credential);
+      } on FirebaseAuthException catch (e) {
+        throw AuthException(_firebaseErrorToMessage(e));
+      } catch (e) {
+        throw AuthException('Firebase rechazo las credenciales de Google: $e');
+      }
+
+      final idToken = await cred.user?.getIdToken();
+      if (idToken == null) {
+        throw AuthException('Firebase no devolvio un token.');
+      }
+      return await _exchangeFirebaseToken(idToken);
+    } on AuthException {
+      rethrow;
     } catch (e) {
-      throw AuthException('Error iniciando Google: $e');
+      throw AuthException('Google login fallo: $e');
     }
-    if (account == null) {
-      throw AuthException('Inicio de sesion con Google cancelado.');
-    }
+  }
 
-    final auth = await account.authentication;
-    final accessToken = auth.accessToken;
-    if (accessToken == null) {
-      throw AuthException('No se obtuvo token de Google.');
-    }
-
-    final uri = Uri.parse('${ApiConfig.baseUrl}/auth/google/mobile/');
+  Future<AuthResult> _exchangeFirebaseToken(String idToken) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}/auth/firebase/');
     final resp = await (ApiClient.debugClient ?? http.Client())
         .post(
           uri,
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'access_token': accessToken}),
+          body: jsonEncode({'id_token': idToken}),
         )
         .timeout(ApiConfig.timeout);
 
     if (resp.statusCode != 200) {
       throw AuthException(
-        _extractError(resp, fallback: 'El servidor rechazo Google.'),
+        _extractError(resp, fallback: 'El servidor rechazo el token de Firebase.'),
       );
     }
 
@@ -144,6 +188,27 @@ class AuthService {
     );
     UserSession.instance.setFromJson(result.user);
     return result;
+  }
+
+  String _firebaseErrorToMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'invalid-email':
+        return 'El correo no es valido.';
+      case 'user-disabled':
+        return 'La cuenta fue deshabilitada.';
+      case 'user-not-found':
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Correo o contrasena incorrectos.';
+      case 'email-already-in-use':
+        return 'Ese correo ya tiene una cuenta.';
+      case 'weak-password':
+        return 'La contrasena es demasiado debil (minimo 6 caracteres).';
+      case 'network-request-failed':
+        return 'Sin conexion. Intenta de nuevo.';
+      default:
+        return e.message ?? 'Error de autenticacion (${e.code}).';
+    }
   }
 
   Future<String> requestPasswordReset(String email) async {
@@ -202,6 +267,9 @@ class AuthService {
   Future<void> logout() async {
     try {
       await _google.signOut();
+    } catch (_) {}
+    try {
+      await _firebase.signOut();
     } catch (_) {}
     await UserSession.instance.clear();
   }

@@ -9,6 +9,7 @@ class UserProfile {
   final int totalStickers;
   final int totalAlbums;
   final int rank;
+  final bool isStaff;
 
   const UserProfile({
     required this.id,
@@ -21,6 +22,7 @@ class UserProfile {
     required this.totalStickers,
     required this.totalAlbums,
     required this.rank,
+    this.isStaff = false,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,7 @@ class UserProfile {
       totalStickers: _asInt(json['stickers_captured']),
       totalAlbums: _asInt(json['albums_count']),
       rank: _asInt(json['rank']),
+      isStaff: json['is_staff'] == true,
     );
   }
 }
@@ -51,6 +54,7 @@ class RankingEntry {
   final String displayName;
   final String username;
   final int points;
+  final String? avatarUrl;
 
   const RankingEntry({
     required this.userId,
@@ -58,6 +62,7 @@ class RankingEntry {
     required this.displayName,
     required this.username,
     required this.points,
+    this.avatarUrl,
   });
 
   factory RankingEntry.fromJson(Map<String, dynamic> json, int rank) {
@@ -72,6 +77,7 @@ class RankingEntry {
       displayName: display,
       username: (json['username'] ?? '').toString(),
       points: _asInt(json['computed_points'] ?? json['points']),
+      avatarUrl: json['avatar']?.toString(),
     );
   }
 }

@@ -1,7 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
+import '../theme/theme_provider.dart';
 import 'home_screen.dart';
 import 'albums_screen.dart';
 import 'capture_screen.dart';
@@ -18,6 +20,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
+  int _refreshKey = 0;
 
   void _openRanking() {
     Navigator.push(
@@ -26,25 +29,32 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  void _openCapture() {
-    Navigator.push(
+  Future<void> _openCapture() async {
+    final unlocked = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => const CaptureScreen()),
     );
+    if (unlocked == true && mounted) {
+      setState(() => _refreshKey++);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.watch<ThemeProvider>().isDark;
+    final themeKey = isDark ? 'd' : 'l';
+
     final screens = <Widget>[
       HomeScreen(
+        key: ValueKey('home_${_refreshKey}_$themeKey'),
         onProfileTapped: () => setState(() => _currentIndex = 4),
         onRankingTapped: _openRanking,
         onAlbumsTapped: () => setState(() => _currentIndex = 1),
       ),
-      const AlbumsScreen(),
-      const SizedBox.shrink(), // placeholder — center slot is a push action
-      const MapScreen(),
-      const ProfileScreen(),
+      AlbumsScreen(key: ValueKey('albums_${_refreshKey}_$themeKey')),
+      const SizedBox.shrink(),
+      MapScreen(key: ValueKey('map_${_refreshKey}_$themeKey')),
+      ProfileScreen(key: ValueKey('profile_${_refreshKey}_$themeKey')),
     ];
 
     return Scaffold(

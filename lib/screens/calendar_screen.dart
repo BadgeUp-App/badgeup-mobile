@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/capture_entry.dart';
 import '../services/content_api.dart';
 import '../theme/app_theme.dart';
+import 'sticker_detail_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -168,8 +169,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ...(events.entries.toList()
                             ..sort((a, b) => a.key.compareTo(b.key)))
                           .expand((entry) => entry.value.map(
-                                (c) => _eventCard(c.stickerName, c.albumTitle,
-                                    entry.key),
+                                (c) => _eventCard(c, entry.key),
                               )),
                     ],
                   ],
@@ -182,61 +182,88 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _eventCard(String name, String album, int day) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: AppTheme.pastelPeach,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Center(
-              child: Text(
-                '$day',
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.onPastelPeach,
+  Future<void> _openStickerDetail(int stickerId) async {
+    try {
+      final sticker = await ContentApi.instance.fetchStickerDetail(stickerId);
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => StickerDetailScreen(sticker: sticker),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se pudo cargar el sticker'),
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _eventCard(CaptureEntry c, int day) {
+    return GestureDetector(
+      onTap: () => _openStickerDetail(c.stickerId),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: AppTheme.pastelPeach,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Center(
+                child: Text(
+                  '$day',
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.onPastelPeach,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.onSurface,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    c.stickerName,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.onSurface,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Album: $album',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    color: AppTheme.onSurfaceVariant,
+                  const SizedBox(height: 2),
+                  Text(
+                    'Album: ${c.albumTitle}',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: AppTheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.check_circle_rounded,
-              size: 20, color: AppTheme.tertiary),
-        ],
+            Icon(Icons.chevron_right_rounded,
+                size: 20, color: AppTheme.onSurfaceVariant),
+          ],
+        ),
       ),
     );
   }

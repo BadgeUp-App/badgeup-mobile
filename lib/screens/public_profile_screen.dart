@@ -59,6 +59,30 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     }
   }
 
+  Future<void> _cancelRequest(Member m) async {
+    final requestId = m.friendRequestId;
+    if (requestId == null) return;
+    try {
+      await SocialApi.instance.cancelFriendRequest(requestId);
+      _snack('Solicitud cancelada');
+      _reload();
+    } catch (e) {
+      _snack('Error: $e');
+    }
+  }
+
+  Future<void> _acceptRequest(Member m) async {
+    final requestId = m.friendRequestId;
+    if (requestId == null) return;
+    try {
+      await SocialApi.instance.acceptFriendRequest(requestId);
+      _snack('Solicitud aceptada');
+      _reload();
+    } catch (e) {
+      _snack('Error: $e');
+    }
+  }
+
   void _openChat(String name) {
     Navigator.push(
       context,
@@ -202,7 +226,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   Widget _buildContent(UserProfile user, Member? member) {
-    final isFriend = member?.isFriend == true;
+    final rel = member?.relationshipStatus ?? 'none';
+    final isFriend = rel == 'friends';
+    final requestSent = rel == 'request_sent';
+    final requestReceived = rel == 'request_received';
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 80),
@@ -345,15 +372,35 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       ),
                     ],
                   )
-                : SizedBox(
-                    width: double.infinity,
-                    child: _actionButton(
-                      label: 'Agregar amigo',
-                      icon: Icons.person_add_rounded,
-                      filled: true,
-                      onTap: _sendFriendRequest,
-                    ),
-                  ),
+                : requestSent
+                    ? SizedBox(
+                        width: double.infinity,
+                        child: _actionButton(
+                          label: 'Cancelar solicitud',
+                          icon: Icons.close_rounded,
+                          filled: false,
+                          onTap: () => _cancelRequest(member!),
+                        ),
+                      )
+                    : requestReceived
+                        ? SizedBox(
+                            width: double.infinity,
+                            child: _actionButton(
+                              label: 'Aceptar solicitud',
+                              icon: Icons.check_rounded,
+                              filled: true,
+                              onTap: () => _acceptRequest(member!),
+                            ),
+                          )
+                        : SizedBox(
+                            width: double.infinity,
+                            child: _actionButton(
+                              label: 'Agregar amigo',
+                              icon: Icons.person_add_rounded,
+                              filled: true,
+                              onTap: _sendFriendRequest,
+                            ),
+                          ),
           ),
         ],
       ),

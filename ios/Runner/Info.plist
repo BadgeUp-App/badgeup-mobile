@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -20,9 +22,41 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.890350684806-fqs7foin6ch0c8dff1d3u0uab3k6iaks</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GIDClientID</key>
+	<string>890350684806-fqs7foin6ch0c8dff1d3u0uab3k6iaks.apps.googleusercontent.com</string>
 	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>BadgeUp necesita la camara para que puedas tomar fotos de tus stickers y actualizar tu foto de perfil.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>BadgeUp se conecta al servidor de desarrollo en tu red local.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>BadgeUp usa tu ubicacion para registrar donde capturas cada sticker.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>BadgeUp guarda capturas de stickers en tu galeria.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>BadgeUp necesita acceso a tus fotos para que puedas elegir una imagen de perfil o subir capturas de tus stickers.</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
@@ -40,46 +74,6 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsLocalNetworking</key>
-		<true/>
-		<key>NSExceptionDomains</key>
-		<dict>
-			<key>localhost</key>
-			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-				<key>NSIncludesSubdomains</key>
-				<true/>
-			</dict>
-		</dict>
-	</dict>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>BadgeUp necesita acceso a tus fotos para que puedas elegir una imagen de perfil o subir capturas de tus stickers.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>BadgeUp necesita la camara para que puedas tomar fotos de tus stickers y actualizar tu foto de perfil.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>BadgeUp guarda capturas de stickers en tu galeria.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>BadgeUp usa tu ubicacion para registrar donde capturas cada sticker.</string>
-	<key>GIDClientID</key>
-	<string>57071208513-3luqnrt2f62inlou4kvaft5v3paekvjq.apps.googleusercontent.com</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.57071208513-3luqnrt2f62inlou4kvaft5v3paekvjq</string>
-			</array>
-		</dict>
 	</array>
 </dict>
 </plist>

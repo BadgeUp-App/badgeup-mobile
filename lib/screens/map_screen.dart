@@ -19,13 +19,19 @@ class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
   late Future<List<StickerLocationEntry>> _future;
 
-  static const _worldCenter = LatLng(20.0, 0.0);
-  static const double _worldZoom = 2.2;
+  static const _gdlCenter = LatLng(20.6597, -103.3496);
+  static const double _defaultZoom = 12.0;
 
   @override
   void initState() {
     super.initState();
     _future = ContentApi.instance.fetchStickerLocations();
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
   }
 
   Future<void> _reload() async {
@@ -148,7 +154,7 @@ class _MapScreenState extends State<MapScreen> {
                     children: [
                       Text(
                         loc.stickerName,
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.onSurface,
@@ -157,7 +163,7 @@ class _MapScreenState extends State<MapScreen> {
                       const SizedBox(height: 2),
                       Text(
                         loc.albumTitle,
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 13,
                           color: AppTheme.onSurfaceVariant,
                         ),
@@ -193,7 +199,7 @@ class _MapScreenState extends State<MapScreen> {
                 const SizedBox(width: 6),
                 Text(
                   '${loc.lat.toStringAsFixed(5)}, ${loc.lng.toStringAsFixed(5)}',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     color: AppTheme.onSurfaceVariant,
                   ),
@@ -256,7 +262,7 @@ class _MapScreenState extends State<MapScreen> {
                         children: [
                           Text(
                             '${cluster.items.length} capturas aqui',
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.inter(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
                               color: AppTheme.onSurface,
@@ -265,7 +271,7 @@ class _MapScreenState extends State<MapScreen> {
                           const SizedBox(height: 2),
                           Text(
                             '${cluster.center.latitude.toStringAsFixed(5)}, ${cluster.center.longitude.toStringAsFixed(5)}',
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.inter(
                               fontSize: 11,
                               color: AppTheme.onSurfaceVariant,
                             ),
@@ -321,7 +327,7 @@ class _MapScreenState extends State<MapScreen> {
                                 children: [
                                   Text(
                                     loc.stickerName,
-                                    style: GoogleFonts.poppins(
+                                    style: GoogleFonts.inter(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: AppTheme.onSurface,
@@ -332,7 +338,7 @@ class _MapScreenState extends State<MapScreen> {
                                   const SizedBox(height: 2),
                                   Text(
                                     '@${loc.username} - ${_rarityLabel(loc.rarity)}',
-                                    style: GoogleFonts.poppins(
+                                    style: GoogleFonts.inter(
                                       fontSize: 11,
                                       color: AppTheme.onSurfaceVariant,
                                     ),
@@ -363,7 +369,7 @@ class _MapScreenState extends State<MapScreen> {
         children: [
           Text(
             label,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: AppTheme.onSurfaceVariant,
@@ -373,7 +379,7 @@ class _MapScreenState extends State<MapScreen> {
           const SizedBox(height: 2),
           Text(
             value,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: accent,
@@ -440,7 +446,7 @@ class _MapScreenState extends State<MapScreen> {
                     child: Center(
                       child: Text(
                         '$count',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                           color: color,
@@ -470,7 +476,7 @@ class _MapScreenState extends State<MapScreen> {
                 children: [
                   Text(
                     'Mapa de capturas',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.inter(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.3,
@@ -513,8 +519,8 @@ class _MapScreenState extends State<MapScreen> {
                         child: FlutterMap(
                           mapController: _mapController,
                           options: const MapOptions(
-                            initialCenter: _worldCenter,
-                            initialZoom: _worldZoom,
+                            initialCenter: _gdlCenter,
+                            initialZoom: _defaultZoom,
                             minZoom: 2,
                             maxZoom: 18,
                           ),
@@ -555,7 +561,7 @@ class _MapScreenState extends State<MapScreen> {
                                 loading
                                     ? 'Cargando ubicaciones...'
                                     : '${locations.length} capturas en ${clusters.length} lugares',
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.inter(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: AppTheme.onSurface,
@@ -585,7 +591,7 @@ class _MapScreenState extends State<MapScreen> {
                                 const SizedBox(height: 10),
                                 Text(
                                   'Sin capturas aun',
-                                  style: GoogleFonts.poppins(
+                                  style: GoogleFonts.inter(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
                                     color: AppTheme.onSurface,
@@ -595,7 +601,7 @@ class _MapScreenState extends State<MapScreen> {
                                 Text(
                                   'Las capturas con GPS apareceran aqui.',
                                   textAlign: TextAlign.center,
-                                  style: GoogleFonts.poppins(
+                                  style: GoogleFonts.inter(
                                     fontSize: 13,
                                     color: AppTheme.onSurfaceVariant,
                                   ),
@@ -617,7 +623,7 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                             child: Text(
                               'Error al cargar ubicaciones',
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
@@ -639,7 +645,7 @@ class _MapScreenState extends State<MapScreen> {
                             const SizedBox(height: 10),
                             _mapActionButton(
                               Icons.public_rounded,
-                              () => _mapController.move(_worldCenter, _worldZoom),
+                              () => _mapController.move(_gdlCenter, _defaultZoom),
                             ),
                           ],
                         ),

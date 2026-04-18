@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'services/user_session.dart';
@@ -6,8 +7,11 @@ import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_shell.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+  } catch (_) {}
   UserSession.instance.loadFromStorage();
   runApp(
     MultiProvider(
@@ -34,12 +38,8 @@ class BadgeUpApp extends StatelessWidget {
       darkTheme: AppTheme.dark,
       themeMode: themeProvider.themeMode,
       builder: (context, child) {
-        return Builder(
-          builder: (ctx) {
-            AppTheme.syncBrightness(Theme.of(ctx).brightness);
-            return child ?? const SizedBox.shrink();
-          },
-        );
+        AppTheme.syncBrightness(Theme.of(context).brightness);
+        return child ?? const SizedBox.shrink();
       },
       home: const _AuthGate(),
     );

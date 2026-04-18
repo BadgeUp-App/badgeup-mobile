@@ -24,8 +24,13 @@ class Sticker {
   final int points;
   final bool unlocked;
   final String imageUrl;
+  final String? unlockedPhotoUrl;
+  final String? funFact;
+  final String? userMessage;
   final String? captureDate;
   final String? captureLocation;
+  final String? albumTitle;
+  final int? albumId;
 
   const Sticker({
     required this.id,
@@ -35,8 +40,13 @@ class Sticker {
     required this.points,
     this.unlocked = false,
     required this.imageUrl,
+    this.unlockedPhotoUrl,
+    this.funFact,
+    this.userMessage,
     this.captureDate,
     this.captureLocation,
+    this.albumTitle,
+    this.albumId,
   });
 
   factory Sticker.fromJson(Map<String, dynamic> json) {
@@ -48,8 +58,13 @@ class Sticker {
       points: _asInt(json['reward_points']),
       unlocked: json['is_unlocked'] == true,
       imageUrl: (json['image'] ?? json['image_reference'] ?? '').toString(),
+      unlockedPhotoUrl: json['unlocked_photo_url']?.toString(),
+      funFact: json['fun_fact']?.toString(),
+      userMessage: json['user_message']?.toString(),
       captureDate: json['unlocked_at']?.toString(),
       captureLocation: json['location_label']?.toString(),
+      albumTitle: json['album_title']?.toString(),
+      albumId: json['album_id'] is int ? json['album_id'] as int : null,
     );
   }
 }

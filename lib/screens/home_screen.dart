@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/album.dart';
 import '../models/user_profile.dart';
+import '../services/auth_service.dart';
 import '../services/content_api.dart';
 import '../services/user_session.dart';
 import '../theme/app_theme.dart';
@@ -29,12 +30,28 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late Future<List<Album>> _albumsFuture;
+  int _rankingUserCount = 0;
+  int _friendCount = 0;
 
   @override
   void initState() {
     super.initState();
     _albumsFuture = ContentApi.instance.fetchAlbums();
     UserSession.instance.refresh();
+    _loadCounts();
+  }
+
+  Future<void> _loadCounts() async {
+    try {
+      final ranking = await ContentApi.instance.fetchLeaderboard();
+      final friends = await ContentApi.instance.fetchFriends();
+      if (mounted) {
+        setState(() {
+          _rankingUserCount = ranking.length;
+          _friendCount = friends.length;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _reload() async {
@@ -42,6 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _albumsFuture = ContentApi.instance.fetchAlbums();
     });
     await UserSession.instance.refresh();
+    _loadCounts();
   }
 
   @override
@@ -134,7 +152,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   : 'Escala posiciones capturando stickers.',
                               trailingIcon: Icons.north_east_rounded,
                               onTap: widget.onRankingTapped,
-                              footer: _AvatarStack(count: 4, extra: 12),
+                              footer: _rankingUserCount > 0
+                                  ? _RankingCountChip(count: _rankingUserCount)
+                                  : const SizedBox(height: 28),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -144,13 +164,19 @@ class _HomeScreenState extends State<HomeScreen> {
                               iconColor: AppTheme.onTertiaryContainer,
                               iconBg: AppTheme.tertiaryContainer,
                               title: 'Amigos',
-                              subtitle: 'Encuentra y chatea con otros cazadores.',
+                              subtitle: _friendCount > 0
+                                  ? '$_friendCount amigos agregados.'
+                                  : 'Encuentra y chatea con otros cazadores.',
                               trailingIcon: Icons.more_horiz_rounded,
                               onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (_) => const FriendsScreen()),
                               ),
-                              footer: const _MiniBar(progress: 0.75),
+                              footer: _MiniBar(
+                                progress: _friendCount > 0
+                                    ? (_friendCount / 10).clamp(0.0, 1.0)
+                                    : 0.0,
+                              ),
                             ),
                           ),
                         ],
@@ -302,6 +328,35 @@ class _TopBar extends StatelessWidget {
   final UserProfile? user;
   final VoidCallback? onProfileTapped;
 
+  void _showLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppTheme.surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: Text('Cerrar sesion',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
+        content: Text('Seguro que quieres salir?',
+            style: GoogleFonts.inter(color: AppTheme.onSurfaceVariant)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await AuthService.instance.logout();
+            },
+            child: Text('Salir',
+                style: GoogleFonts.inter(
+                    color: AppTheme.error, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final initial = (user?.displayName.isNotEmpty ?? false)
@@ -309,15 +364,18 @@ class _TopBar extends StatelessWidget {
         : '?';
     return Row(
       children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: AppTheme.subtleLift,
+        GestureDetector(
+          onLongPress: () => _showLogout(context),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: AppTheme.subtleLift,
+            ),
+            child: Icon(Icons.menu_rounded, color: AppTheme.onSurface, size: 22),
           ),
-          child: Icon(Icons.menu_rounded, color: AppTheme.onSurface, size: 22),
         ),
         const SizedBox(width: 12),
         Text(
@@ -628,58 +686,25 @@ class _SideTile extends StatelessWidget {
   }
 }
 
-class _AvatarStack extends StatelessWidget {
-  const _AvatarStack({required this.count, required this.extra});
+class _RankingCountChip extends StatelessWidget {
+  const _RankingCountChip({required this.count});
   final int count;
-  final int extra;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 28,
-      child: Stack(
-        children: [
-          for (int i = 0; i < count; i++)
-            Positioned(
-              left: i * 18.0,
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: [
-                    AppTheme.secondaryContainer,
-                    AppTheme.tertiaryContainer,
-                    AppTheme.pastelPeach,
-                    AppTheme.surfaceContainerHigh,
-                  ][i % 4],
-                  border: Border.all(color: AppTheme.surfaceContainerLow, width: 2.5),
-                ),
-              ),
-            ),
-          Positioned(
-            left: count * 18.0,
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.surfaceContainerLowest,
-                border: Border.all(color: AppTheme.surfaceContainerLow, width: 2.5),
-              ),
-              child: Center(
-                child: Text(
-                  '+$extra',
-                  style: GoogleFonts.inter(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.onSurface,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '$count jugador${count == 1 ? '' : 'es'}',
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.onSurfaceVariant,
+        ),
       ),
     );
   }

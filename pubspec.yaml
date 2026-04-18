@@ -20,6 +20,9 @@ dependencies:
   image_picker: ^1.1.2
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
+  geolocator: ^13.0.2
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
 
 dev_dependencies:
   flutter_test:
@@ -27,6 +30,13 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.1
 
 flutter:
   uses-material-design: true
+
+flutter_launcher_icons:
+  ios: true
+  android: false
+  image_path: "assets/icon/app_icon.png"
+  remove_alpha_ios: true

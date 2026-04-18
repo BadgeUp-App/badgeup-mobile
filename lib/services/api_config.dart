@@ -1,13 +1,11 @@
-import 'dart:io' show Platform;
-
 class ApiConfig {
   static const String _envUrl = String.fromEnvironment('API_URL');
+  static const String _prodUrl = 'https://badgeup-backend-production.up.railway.app/api';
 
   static String get baseUrl {
     if (_envUrl.isNotEmpty) return _envUrl;
-    if (Platform.isAndroid) return 'http://10.0.2.2:8000/api';
-    return 'http://localhost:8000/api';
+    return _prodUrl;
   }
 
-  static const Duration timeout = Duration(seconds: 15);
+  static const Duration timeout = Duration(seconds: 30);
 }

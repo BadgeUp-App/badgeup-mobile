@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _showError(e.message);
     } catch (e) {
       if (!mounted) return;
-      _showError('Error de conexion con Google.');
+      _showError('Error de conexion con Google: $e');
     } finally {
       if (mounted) setState(() => _googleLoading = false);
     }

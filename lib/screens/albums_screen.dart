@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/album.dart';
 import '../services/content_api.dart';
+import '../services/user_session.dart';
 import '../theme/app_theme.dart';
 import 'album_detail_screen.dart';
 import 'create_album_screen.dart';
@@ -81,33 +82,34 @@ class _AlbumsScreenState extends State<AlbumsScreen> {
                                 ),
                               ),
                               const Spacer(),
-                              GestureDetector(
-                                onTap: _showCreateSheet,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.surfaceContainerLowest,
-                                    borderRadius: BorderRadius.circular(14),
-                                    boxShadow: AppTheme.subtleLift,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.add_rounded,
-                                          size: 16, color: AppTheme.primary),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Nuevo',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppTheme.primary,
+                              if (UserSession.instance.user?.isStaff == true)
+                                GestureDetector(
+                                  onTap: _showCreateSheet,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.surfaceContainerLowest,
+                                      borderRadius: BorderRadius.circular(14),
+                                      boxShadow: AppTheme.subtleLift,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.add_rounded,
+                                            size: 16, color: AppTheme.primary),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Nuevo',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.primary,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
                             ],
                           ),
                         ),

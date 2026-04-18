@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../services/preferences_service.dart';
 import '../theme/theme_provider.dart';
 import '../theme/app_theme.dart';
+import '../services/auth_service.dart';
 import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
+import 'login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -18,6 +21,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _gpsEnabled = true;
   bool _soundEnabled = true;
   String _language = 'Espanol';
+  @override
+  void initState() {
+    super.initState();
+    _loadPrefs();
+  }
+
+  Future<void> _loadPrefs() async {
+    final prefs = PreferencesService.instance;
+    final sound = await prefs.soundEnabled;
+    final gps = await prefs.gpsEnabled;
+    if (!mounted) return;
+    setState(() {
+      _soundEnabled = sound;
+      _gpsEnabled = gps;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +145,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               label: 'Sonidos',
               trailing: Switch(
                 value: _soundEnabled,
-                onChanged: (value) => setState(() => _soundEnabled = value),
+                onChanged: (value) {
+                  setState(() => _soundEnabled = value);
+                  PreferencesService.instance.setSoundEnabled(value);
+                },
                 activeThumbColor: AppTheme.primaryContainer,
               ),
             ),
@@ -138,7 +160,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               label: 'Compartir ubicacion GPS',
               trailing: Switch(
                 value: _gpsEnabled,
-                onChanged: (value) => setState(() => _gpsEnabled = value),
+                onChanged: (value) {
+                  setState(() => _gpsEnabled = value);
+                  PreferencesService.instance.setGpsEnabled(value);
+                },
                 activeThumbColor: AppTheme.primaryContainer,
               ),
             ),
@@ -188,6 +213,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   builder: (_) => const ChangePasswordScreen(),
                 ),
               ),
+            ),
+            _settingsTile(
+              context,
+              icon: Icons.logout_rounded,
+              label: 'Cerrar sesion',
+              isDestructive: true,
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    backgroundColor: AppTheme.surfaceContainerLowest,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28)),
+                    title: Text('Cerrar sesion',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
+                    content: Text(
+                      'Seguro que quieres cerrar sesion?',
+                      style: GoogleFonts.inter(color: AppTheme.onSurfaceVariant),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text('Cancelar',
+                            style: GoogleFonts.inter(
+                                color: AppTheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w700)),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await AuthService.instance.logout();
+                          if (!context.mounted) return;
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                            (_) => false,
+                          );
+                        },
+                        child: Text('Cerrar sesion',
+                            style: GoogleFonts.inter(
+                                color: AppTheme.error,
+                                fontWeight: FontWeight.w800)),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
             _settingsTile(
               context,

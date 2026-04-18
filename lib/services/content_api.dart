@@ -14,6 +14,10 @@ class MatchPhotoResult {
   final String? stickerName;
   final int? stickerId;
   final String? funFact;
+  final String? detectedItem;
+  final String? detectedCategory;
+  final int? albumId;
+  final String? albumTitle;
   final String? carMake;
   final String? carModel;
   final Sticker? sticker;
@@ -26,6 +30,10 @@ class MatchPhotoResult {
     required this.stickerName,
     required this.stickerId,
     required this.funFact,
+    required this.detectedItem,
+    required this.detectedCategory,
+    required this.albumId,
+    required this.albumTitle,
     required this.carMake,
     required this.carModel,
     required this.sticker,
@@ -51,6 +59,10 @@ class MatchPhotoResult {
       stickerName: name,
       stickerId: id,
       funFact: json['fun_fact']?.toString(),
+      detectedItem: json['detected_item']?.toString(),
+      detectedCategory: json['detected_category']?.toString(),
+      albumId: json['album_id'] is int ? json['album_id'] as int : null,
+      albumTitle: json['album_title']?.toString(),
       carMake: car['make']?.toString(),
       carModel: car['model']?.toString(),
       sticker: sticker,
@@ -256,6 +268,24 @@ class ContentApi {
     );
     if (data is Map<String, dynamic>) return MatchPhotoResult.fromJson(data);
     throw StateError('Respuesta de IA invalida.');
+  }
+
+  Future<MatchPhotoResult> scanPhoto({
+    required File photo,
+    double? lat,
+    double? lng,
+  }) async {
+    final fields = <String, String>{
+      if (lat != null) 'lat': lat.toString(),
+      if (lng != null) 'lng': lng.toString(),
+    };
+    final data = await ApiClient.instance.postMultipart(
+      '/scan/',
+      fields: fields,
+      files: {'photo': photo},
+    );
+    if (data is Map<String, dynamic>) return MatchPhotoResult.fromJson(data);
+    throw StateError('Respuesta de scan invalida.');
   }
 
   Future<List<CaptureEntry>> fetchCaptureHistory() async {
