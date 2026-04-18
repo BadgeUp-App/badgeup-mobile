@@ -8,6 +8,7 @@ import '../services/auth_service.dart';
 import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
 import 'login_screen.dart';
+import 'scan_logs_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -211,6 +212,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (_) => const ChangePasswordScreen(),
+                ),
+              ),
+            ),
+            _settingsTile(
+              context,
+              icon: Icons.document_scanner_outlined,
+              label: 'Scan Logs',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ScanLogsScreen(),
                 ),
               ),
             ),
