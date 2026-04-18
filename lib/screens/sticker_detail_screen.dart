@@ -415,20 +415,26 @@ class _HeroPanelState extends State<_HeroPanel> {
           children: [
             if (hasMultiple)
               Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(36),
-                  child: PageView.builder(
-                    itemCount: urls.length,
-                    onPageChanged: (i) => setState(() => _currentPage = i),
-                    itemBuilder: (_, i) => _photoImage(urls[i]),
+                child: GestureDetector(
+                  onTap: () => _openFullscreen(context, urls, _currentPage),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(36),
+                    child: PageView.builder(
+                      itemCount: urls.length,
+                      onPageChanged: (i) => setState(() => _currentPage = i),
+                      itemBuilder: (_, i) => _photoImage(urls[i]),
+                    ),
                   ),
                 ),
               )
             else
               Positioned.fill(
-                child: Hero(
-                  tag: 'sticker_${widget.sticker.id}',
-                  child: _photoImage(urls.first),
+                child: GestureDetector(
+                  onTap: () => _openFullscreen(context, urls, 0),
+                  child: Hero(
+                    tag: 'sticker_${widget.sticker.id}',
+                    child: _photoImage(urls.first),
+                  ),
                 ),
               ),
             Positioned(
@@ -506,6 +512,21 @@ class _HeroPanelState extends State<_HeroPanel> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _openFullscreen(BuildContext context, List<String> urls, int initial) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder: (_, __, ___) => _FullscreenViewer(
+          urls: urls,
+          initialIndex: initial,
+        ),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
       ),
     );
   }
@@ -720,6 +741,146 @@ class _FloatingActionTray extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _FullscreenViewer extends StatefulWidget {
+  const _FullscreenViewer({required this.urls, this.initialIndex = 0});
+  final List<String> urls;
+  final int initialIndex;
+
+  @override
+  State<_FullscreenViewer> createState() => _FullscreenViewerState();
+}
+
+class _FullscreenViewerState extends State<_FullscreenViewer> {
+  late int _current;
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _current = widget.initialIndex;
+    _pageController = PageController(initialPage: _current);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final multi = widget.urls.length > 1;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.urls.length,
+            onPageChanged: (i) => setState(() => _current = i),
+            itemBuilder: (_, i) => InteractiveViewer(
+              minScale: 1.0,
+              maxScale: 4.0,
+              child: Center(
+                child: CachedNetworkImage(
+                  imageUrl: widget.urls[i],
+                  fit: BoxFit.contain,
+                  placeholder: (_, __) => const CircularProgressIndicator(
+                    color: Colors.white24,
+                    strokeWidth: 2,
+                  ),
+                  errorWidget: (_, __, ___) => const Icon(
+                    Icons.broken_image_rounded,
+                    color: Colors.white38,
+                    size: 64,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 12,
+            right: 16,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close_rounded,
+                    color: Colors.white, size: 22),
+              ),
+            ),
+          ),
+          if (multi)
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 24,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(widget.urls.length, (i) {
+                        return Container(
+                          width: i == _current ? 20 : 6,
+                          height: 6,
+                          margin: EdgeInsets.only(left: i > 0 ? 5 : 0),
+                          decoration: BoxDecoration(
+                            color: i == _current
+                                ? Colors.white
+                                : Colors.white.withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (multi)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 16,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${_current + 1} / ${widget.urls.length}',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
