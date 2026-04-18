@@ -43,12 +43,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadCounts() async {
     try {
-      final ranking = await ContentApi.instance.fetchLeaderboard();
-      final friends = await ContentApi.instance.fetchFriends();
+      final results = await Future.wait([
+        ContentApi.instance.fetchLeaderboard(),
+        ContentApi.instance.fetchFriends(),
+      ]);
       if (mounted) {
         setState(() {
-          _rankingUserCount = ranking.length;
-          _friendCount = friends.length;
+          _rankingUserCount = (results[0] as List).length;
+          _friendCount = (results[1] as List).length;
         });
       }
     } catch (_) {}
@@ -56,10 +58,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _reload() async {
     setState(() {
-      _albumsFuture = ContentApi.instance.fetchAlbums();
+      _albumsFuture = ContentApi.instance.fetchAlbums(forceRefresh: true);
     });
-    await UserSession.instance.refresh();
-    _loadCounts();
+    await Future.wait([
+      UserSession.instance.refresh(),
+      _loadCountsForce(),
+    ]);
+  }
+
+  Future<void> _loadCountsForce() async {
+    try {
+      final results = await Future.wait([
+        ContentApi.instance.fetchLeaderboard(forceRefresh: true),
+        ContentApi.instance.fetchFriends(forceRefresh: true),
+      ]);
+      if (mounted) {
+        setState(() {
+          _rankingUserCount = (results[0] as List).length;
+          _friendCount = (results[1] as List).length;
+        });
+      }
+    } catch (_) {}
   }
 
   @override

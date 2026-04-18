@@ -28,7 +28,7 @@ class _AlbumsScreenState extends State<AlbumsScreen> {
 
   Future<void> _reload() async {
     setState(() {
-      _future = ContentApi.instance.fetchAlbums();
+      _future = ContentApi.instance.fetchAlbums(forceRefresh: true);
     });
   }
 

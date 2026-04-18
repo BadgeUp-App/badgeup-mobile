@@ -16,6 +16,26 @@ Rarity rarityFromString(String? raw) {
   }
 }
 
+class CapturePhotoEntry {
+  final int id;
+  final String url;
+  final String? capturedAt;
+
+  const CapturePhotoEntry({
+    required this.id,
+    required this.url,
+    this.capturedAt,
+  });
+
+  factory CapturePhotoEntry.fromJson(Map<String, dynamic> json) {
+    return CapturePhotoEntry(
+      id: _asInt(json['id']),
+      url: (json['url'] ?? '').toString(),
+      capturedAt: json['captured_at']?.toString(),
+    );
+  }
+}
+
 class Sticker {
   final int id;
   final String name;
@@ -25,6 +45,7 @@ class Sticker {
   final bool unlocked;
   final String imageUrl;
   final String? unlockedPhotoUrl;
+  final List<CapturePhotoEntry> capturePhotos;
   final String? funFact;
   final String? userMessage;
   final String? captureDate;
@@ -41,6 +62,7 @@ class Sticker {
     this.unlocked = false,
     required this.imageUrl,
     this.unlockedPhotoUrl,
+    this.capturePhotos = const [],
     this.funFact,
     this.userMessage,
     this.captureDate,
@@ -50,6 +72,13 @@ class Sticker {
   });
 
   factory Sticker.fromJson(Map<String, dynamic> json) {
+    final photosJson = json['capture_photos'];
+    final List<CapturePhotoEntry> photos = photosJson is List
+        ? photosJson
+            .whereType<Map<String, dynamic>>()
+            .map(CapturePhotoEntry.fromJson)
+            .toList()
+        : const [];
     return Sticker(
       id: _asInt(json['id']),
       name: (json['name'] ?? '').toString(),
@@ -59,6 +88,7 @@ class Sticker {
       unlocked: json['is_unlocked'] == true,
       imageUrl: (json['image'] ?? json['image_reference'] ?? '').toString(),
       unlockedPhotoUrl: json['unlocked_photo_url']?.toString(),
+      capturePhotos: photos,
       funFact: json['fun_fact']?.toString(),
       userMessage: json['user_message']?.toString(),
       captureDate: json['unlocked_at']?.toString(),

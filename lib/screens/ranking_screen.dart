@@ -25,7 +25,7 @@ class _RankingScreenState extends State<RankingScreen> {
 
   Future<void> _reload() async {
     setState(() {
-      _future = ContentApi.instance.fetchLeaderboard();
+      _future = ContentApi.instance.fetchLeaderboard(forceRefresh: true);
     });
   }
 

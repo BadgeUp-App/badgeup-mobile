@@ -27,8 +27,23 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   @override
   void initState() {
     super.initState();
-    album = widget.album;
-    _loadDetail();
+    final cached = ContentApi.instance.getCachedDetail(widget.album.id);
+    if (cached != null && cached.stickers.isNotEmpty) {
+      album = cached;
+      _loadingStickers = false;
+      _refreshInBackground();
+    } else {
+      album = widget.album;
+      _loadDetail();
+    }
+  }
+
+  Future<void> _refreshInBackground() async {
+    try {
+      final full = await ContentApi.instance
+          .fetchAlbumDetail(album.id, forceRefresh: true);
+      if (mounted) setState(() => album = full);
+    } catch (_) {}
   }
 
   Future<void> _loadDetail() async {

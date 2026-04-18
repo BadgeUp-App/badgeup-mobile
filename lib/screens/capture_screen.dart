@@ -87,14 +87,25 @@ class _CaptureScreenState extends State<CaptureScreen>
       SoundService.instance.playUnlockSound();
       HapticFeedback.heavyImpact();
       _didUnlock = true;
+      ContentApi.instance.clearCache();
     }
+
+    String title;
+    if (r.alreadyUnlocked && r.photoAdded) {
+      title = 'Foto agregada';
+    } else if (r.unlocked) {
+      title = 'Sticker desbloqueado';
+    } else {
+      title = 'Sin match';
+    }
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surfaceContainerLowest,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         title: Text(
-          r.unlocked ? 'Sticker desbloqueado' : 'Sin match',
+          title,
           style: GoogleFonts.inter(fontWeight: FontWeight.w800),
         ),
         content: SingleChildScrollView(
@@ -113,7 +124,18 @@ class _CaptureScreenState extends State<CaptureScreen>
                     ),
                   ),
                 ),
-              if (r.albumTitle != null && r.unlocked)
+              if (r.alreadyUnlocked && r.photoAdded)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'Nueva foto guardada en tu coleccion. Puedes verla en el carrusel del sticker.',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: AppTheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              if (r.albumTitle != null && r.unlocked && !r.alreadyUnlocked)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
@@ -172,7 +194,7 @@ class _CaptureScreenState extends State<CaptureScreen>
           ),
         ),
         actions: [
-          if (r.unlocked && r.stickerId != null)
+          if (r.unlocked && r.stickerId != null && !r.alreadyUnlocked)
             TextButton(
               onPressed: () {
                 Navigator.pop(context);

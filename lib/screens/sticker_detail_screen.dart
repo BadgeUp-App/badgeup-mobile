@@ -374,55 +374,63 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _HeroPanel extends StatelessWidget {
+class _HeroPanel extends StatefulWidget {
   const _HeroPanel({required this.sticker, required this.showPhoto});
   final Sticker sticker;
   final bool showPhoto;
 
   @override
+  State<_HeroPanel> createState() => _HeroPanelState();
+}
+
+class _HeroPanelState extends State<_HeroPanel> {
+  int _currentPage = 0;
+
+  List<String> _buildUrls() {
+    final urls = <String>[];
+    if (widget.showPhoto && widget.sticker.capturePhotos.isNotEmpty) {
+      for (final cp in widget.sticker.capturePhotos) {
+        if (cp.url.isNotEmpty) urls.add(cp.url);
+      }
+    }
+    if (urls.isEmpty && widget.showPhoto && widget.sticker.unlockedPhotoUrl != null) {
+      urls.add(widget.sticker.unlockedPhotoUrl!);
+    }
+    if (urls.isEmpty) {
+      urls.add(widget.sticker.imageUrl);
+    }
+    return urls;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final urls = _buildUrls();
+    final hasMultiple = urls.length > 1;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
       child: AspectRatio(
         aspectRatio: 1,
         child: Stack(
           children: [
-            Positioned.fill(
-              child: Hero(
-                tag: 'sticker_${sticker.id}',
-                child: CachedNetworkImage(
-                  imageUrl: showPhoto
-                      ? sticker.unlockedPhotoUrl!
-                      : sticker.imageUrl,
-                  fit: showPhoto ? BoxFit.cover : BoxFit.contain,
-                  imageBuilder: (context, provider) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(36),
-                        image: DecorationImage(
-                          image: provider,
-                          fit: showPhoto ? BoxFit.cover : BoxFit.contain,
-                        ),
-                      ),
-                    );
-                  },
-                  placeholder: (_, __) => Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(36),
-                    ),
-                  ),
-                  errorWidget: (_, __, ___) => Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(36),
-                    ),
-                    child: Icon(Icons.emoji_events_rounded,
-                        size: 80, color: AppTheme.onSurfaceVariant),
+            if (hasMultiple)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(36),
+                  child: PageView.builder(
+                    itemCount: urls.length,
+                    onPageChanged: (i) => setState(() => _currentPage = i),
+                    itemBuilder: (_, i) => _photoImage(urls[i]),
                   ),
                 ),
+              )
+            else
+              Positioned.fill(
+                child: Hero(
+                  tag: 'sticker_${widget.sticker.id}',
+                  child: _photoImage(urls.first),
+                ),
               ),
-            ),
             Positioned(
               top: 18,
               right: 18,
@@ -431,8 +439,7 @@ class _HeroPanel extends StatelessWidget {
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.55),
                       borderRadius: BorderRadius.circular(999),
@@ -443,7 +450,7 @@ class _HeroPanel extends StatelessWidget {
                             color: AppTheme.secondary, size: 14),
                         const SizedBox(width: 6),
                         Text(
-                          _rarityLabel(sticker.rarity),
+                          _rarityLabel(widget.sticker.rarity),
                           style: GoogleFonts.inter(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
@@ -457,8 +464,81 @@ class _HeroPanel extends StatelessWidget {
                 ),
               ),
             ),
+            if (hasMultiple)
+              Positioned(
+                bottom: 16,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: List.generate(urls.length, (i) {
+                              return Container(
+                                width: i == _currentPage ? 18 : 6,
+                                height: 6,
+                                margin: EdgeInsets.only(left: i > 0 ? 4 : 0),
+                                decoration: BoxDecoration(
+                                  color: i == _currentPage
+                                      ? Colors.white
+                                      : Colors.white.withValues(alpha: 0.4),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              );
+                            }),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _photoImage(String url) {
+    final isCapture = widget.showPhoto;
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: isCapture ? BoxFit.cover : BoxFit.contain,
+      imageBuilder: (context, provider) {
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(36),
+            image: DecorationImage(
+              image: provider,
+              fit: isCapture ? BoxFit.cover : BoxFit.contain,
+            ),
+          ),
+        );
+      },
+      placeholder: (_, __) => Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(36),
+        ),
+      ),
+      errorWidget: (_, __, ___) => Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(36),
+        ),
+        child: Icon(Icons.emoji_events_rounded,
+            size: 80, color: AppTheme.onSurfaceVariant),
       ),
     );
   }
