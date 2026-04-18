@@ -90,6 +90,27 @@ class _CaptureScreenState extends State<CaptureScreen>
       ContentApi.instance.clearCache();
     }
 
+    final allResults = <MatchPhotoResult>[];
+    if (r.allUnlocked.isNotEmpty) {
+      allResults.addAll(r.allUnlocked);
+    } else if (r.unlocked) {
+      allResults.add(r);
+    }
+
+    if (!r.unlocked) {
+      _showSingleResult(r);
+      return;
+    }
+
+    if (allResults.length <= 1) {
+      _showSingleResult(r);
+      return;
+    }
+
+    _showMultiResult(allResults, r.funFact);
+  }
+
+  void _showSingleResult(MatchPhotoResult r) {
     String title;
     if (r.alreadyUnlocked && r.photoAdded) {
       title = 'Foto agregada';
@@ -104,10 +125,7 @@ class _CaptureScreenState extends State<CaptureScreen>
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surfaceContainerLowest,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: Text(
-          title,
-          style: GoogleFonts.inter(fontWeight: FontWeight.w800),
-        ),
+        title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,7 +146,7 @@ class _CaptureScreenState extends State<CaptureScreen>
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
-                    'Nueva foto guardada en tu coleccion. Puedes verla en el carrusel del sticker.',
+                    'Nueva foto guardada en tu coleccion.',
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       color: AppTheme.onSurfaceVariant,
@@ -149,10 +167,7 @@ class _CaptureScreenState extends State<CaptureScreen>
               if (r.detectedItem != null && r.detectedItem!.isNotEmpty) ...[
                 Text(
                   'Detectado: ${r.detectedItem}',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AppTheme.onSurfaceVariant,
-                  ),
+                  style: GoogleFonts.inter(fontSize: 13, color: AppTheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
               ],
@@ -163,31 +178,17 @@ class _CaptureScreenState extends State<CaptureScreen>
                 ),
               if (r.funFact != null && r.funFact!.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text(
-                  r.funFact!,
-                  style: GoogleFonts.inter(
-                      fontSize: 12, color: AppTheme.onSurfaceVariant),
-                ),
+                Text(r.funFact!, style: GoogleFonts.inter(fontSize: 12, color: AppTheme.onSurfaceVariant)),
               ],
-              if (!r.unlocked &&
-                  r.detectedItem != null &&
-                  r.stickerName == null) ...[
+              if (!r.unlocked && r.detectedItem != null && r.stickerName == null) ...[
                 const SizedBox(height: 8),
-                Text(
-                  r.message,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.onSurface,
-                  ),
-                ),
+                Text(r.message, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.onSurface)),
               ],
               if (r.matchScore > 0) ...[
                 const SizedBox(height: 10),
                 Text(
                   'Confianza: ${(r.matchScore * 100).toStringAsFixed(0)}%',
-                  style: GoogleFonts.inter(
-                      fontSize: 12, fontWeight: FontWeight.w700),
+                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
                 ),
               ],
             ],
@@ -200,19 +201,112 @@ class _CaptureScreenState extends State<CaptureScreen>
                 Navigator.pop(context);
                 _showThoughtsDialog(r.stickerId!);
               },
-              child: Text(
-                'Escribir nota',
-                style: GoogleFonts.inter(
-                    color: AppTheme.secondary, fontWeight: FontWeight.w700),
-              ),
+              child: Text('Escribir nota', style: GoogleFonts.inter(color: AppTheme.secondary, fontWeight: FontWeight.w700)),
             ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cerrar',
-              style: GoogleFonts.inter(
-                  color: AppTheme.primary, fontWeight: FontWeight.w700),
-            ),
+            child: Text('Cerrar', style: GoogleFonts.inter(color: AppTheme.primary, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMultiResult(List<MatchPhotoResult> results, String? funFact) {
+    final newCount = results.where((r) => !r.alreadyUnlocked).length;
+    final dupeCount = results.where((r) => r.alreadyUnlocked).length;
+
+    String title;
+    if (newCount > 0 && dupeCount > 0) {
+      title = '$newCount nuevo${newCount > 1 ? 's' : ''}, $dupeCount repetido${dupeCount > 1 ? 's' : ''}';
+    } else if (newCount > 0) {
+      title = '$newCount sticker${newCount > 1 ? 's' : ''} desbloqueado${newCount > 1 ? 's' : ''}';
+    } else {
+      title = '$dupeCount foto${dupeCount > 1 ? 's' : ''} agregada${dupeCount > 1 ? 's' : ''}';
+    }
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppTheme.surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final r in results)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: r.alreadyUnlocked
+                              ? AppTheme.surfaceContainerHigh
+                              : AppTheme.tertiaryContainer,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          r.alreadyUnlocked
+                              ? Icons.add_photo_alternate_rounded
+                              : Icons.check_rounded,
+                          size: 18,
+                          color: r.alreadyUnlocked
+                              ? AppTheme.onSurfaceVariant
+                              : AppTheme.onTertiaryContainer,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              r.stickerName ?? 'Sticker',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.onSurface,
+                              ),
+                            ),
+                            Text(
+                              r.alreadyUnlocked
+                                  ? 'Foto agregada al carrusel'
+                                  : r.albumTitle ?? 'Desbloqueado',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                color: AppTheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '${(r.matchScore * 100).toStringAsFixed(0)}%',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (funFact != null && funFact.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(funFact, style: GoogleFonts.inter(fontSize: 12, color: AppTheme.onSurfaceVariant)),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cerrar', style: GoogleFonts.inter(color: AppTheme.primary, fontWeight: FontWeight.w700)),
           ),
         ],
       ),

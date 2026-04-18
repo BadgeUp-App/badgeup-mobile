@@ -23,6 +23,7 @@ class MatchPhotoResult {
   final String? carMake;
   final String? carModel;
   final Sticker? sticker;
+  final List<MatchPhotoResult> allUnlocked;
 
   const MatchPhotoResult({
     required this.unlocked,
@@ -40,6 +41,7 @@ class MatchPhotoResult {
     required this.carMake,
     required this.carModel,
     required this.sticker,
+    this.allUnlocked = const [],
   });
 
   factory MatchPhotoResult.fromJson(Map<String, dynamic> json) {
@@ -54,6 +56,44 @@ class MatchPhotoResult {
     }
     final car = (json['car'] is Map) ? json['car'] as Map : const {};
     final score = json['match_score'];
+
+    final rawAll = json['all_unlocked'];
+    final List<MatchPhotoResult> extras = [];
+    if (rawAll is List) {
+      for (final item in rawAll) {
+        if (item is Map<String, dynamic>) {
+          final s = item['sticker'];
+          Sticker? extraSticker;
+          String? extraName;
+          int? extraId;
+          if (s is Map<String, dynamic>) {
+            extraSticker = Sticker.fromJson(s);
+            extraName = extraSticker.name;
+            extraId = extraSticker.id;
+          }
+          extras.add(MatchPhotoResult(
+            unlocked: true,
+            alreadyUnlocked: item['already_unlocked'] == true,
+            photoAdded: item['photo_added'] == true,
+            message: '',
+            matchScore: (item['match_score'] is num)
+                ? (item['match_score'] as num).toDouble()
+                : 0.0,
+            stickerName: extraName,
+            stickerId: extraId,
+            funFact: null,
+            detectedItem: null,
+            detectedCategory: null,
+            albumId: item['album_id'] is int ? item['album_id'] as int : null,
+            albumTitle: item['album_title']?.toString(),
+            carMake: null,
+            carModel: null,
+            sticker: extraSticker,
+          ));
+        }
+      }
+    }
+
     return MatchPhotoResult(
       unlocked: json['unlocked'] == true,
       alreadyUnlocked: json['already_unlocked'] == true,
@@ -70,6 +110,7 @@ class MatchPhotoResult {
       carMake: car['make']?.toString(),
       carModel: car['model']?.toString(),
       sticker: sticker,
+      allUnlocked: extras,
     );
   }
 }
