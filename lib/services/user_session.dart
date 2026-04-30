@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/user_profile.dart';
 import 'api_client.dart';
+import 'push_service.dart';
 import 'token_storage.dart';
 
 class UserSession extends ChangeNotifier {
@@ -17,6 +18,9 @@ class UserSession extends ChangeNotifier {
       _user = null;
     } else {
       _user = UserProfile.fromJson(json);
+      PushService.instance.init().then((_) {
+        PushService.instance.registerWithBackend();
+      });
     }
     notifyListeners();
   }
@@ -47,6 +51,9 @@ class UserSession extends ChangeNotifier {
   }
 
   Future<void> clear() async {
+    try {
+      await PushService.instance.unregister();
+    } catch (_) {}
     _user = null;
     await TokenStorage.clear();
     notifyListeners();

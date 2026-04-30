@@ -39,17 +39,8 @@
 	<string>890350684806-fqs7foin6ch0c8dff1d3u0uab3k6iaks.apps.googleusercontent.com</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-		<key>NSAllowsLocalNetworking</key>
-		<true/>
-	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>BadgeUp necesita la camara para que puedas tomar fotos de tus stickers y actualizar tu foto de perfil.</string>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>BadgeUp se conecta al servidor de desarrollo en tu red local.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>BadgeUp usa tu ubicacion para registrar donde capturas cada sticker.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -57,6 +48,12 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>BadgeUp necesita acceso a tus fotos para que puedas elegir una imagen de perfil o subir capturas de tus stickers.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+	<key>FirebaseAppDelegateProxyEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

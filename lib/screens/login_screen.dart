@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
+import '../services/user_session.dart';
 import '../theme/app_theme.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
@@ -46,7 +47,9 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _googleLoading = true);
     try {
       await AuthService.instance.signInWithGoogle();
-      // AuthGate will swap to MainShell once the session updates.
+      if (!UserSession.instance.isLoggedIn) {
+        await UserSession.instance.refresh();
+      }
     } on AuthException catch (e) {
       if (!mounted) return;
       _showError(e.message);
