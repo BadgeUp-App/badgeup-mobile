@@ -49,10 +49,6 @@
 	<string>BadgeUp necesita acceso a tus fotos para que puedas elegir una imagen de perfil o subir capturas de tus stickers.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
