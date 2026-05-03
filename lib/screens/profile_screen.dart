@@ -18,6 +18,7 @@ import 'friends_screen.dart';
 import 'ranking_screen.dart';
 import 'calendar_screen.dart';
 import 'chat_screen.dart';
+import 'album_detail_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -260,63 +261,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             separatorBuilder: (_, __) => const SizedBox(width: 14),
                             itemBuilder: (context, i) {
                               final album = albums[i];
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(22),
-                                child: SizedBox(
-                                  width: 220,
-                                  child: Stack(
-                                    fit: StackFit.expand,
-                                    children: [
-                                      CachedNetworkImage(
-                                        imageUrl: album.coverUrl,
-                                        fit: BoxFit.cover,
-                                        placeholder: (_, __) => Container(
-                                          color: AppTheme.surfaceContainerHigh,
+                              return GestureDetector(
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        AlbumDetailScreen(album: album),
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(22),
+                                  child: SizedBox(
+                                    width: 220,
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        CachedNetworkImage(
+                                          imageUrl: album.coverUrl,
+                                          fit: BoxFit.cover,
+                                          placeholder: (_, __) => Container(
+                                            color: AppTheme.surfaceContainerHigh,
+                                          ),
+                                          errorWidget: (_, __, ___) => Container(
+                                            color: AppTheme.surfaceContainerHigh,
+                                            child: Icon(Icons.collections_rounded,
+                                                color: AppTheme.onSurfaceVariant),
+                                          ),
                                         ),
-                                        errorWidget: (_, __, ___) => Container(
-                                          color: AppTheme.surfaceContainerHigh,
-                                          child: Icon(Icons.collections_rounded,
-                                              color: AppTheme.onSurfaceVariant),
+                                        Container(
+                                          decoration: const BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                              colors: [
+                                                Colors.transparent,
+                                                Color(0xCC0C0E12),
+                                              ],
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                      Container(
-                                        decoration: const BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                            colors: [
-                                              Colors.transparent,
-                                              Color(0xCC0C0E12),
+                                        Padding(
+                                          padding: const EdgeInsets.all(16),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                album.title,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                '${album.unlockedCount}/${album.totalCount} figuritas',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 11,
+                                                  color: Colors.white.withValues(alpha: 0.85),
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.end,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              album.title,
-                                              style: GoogleFonts.inter(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w800,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '${album.unlockedCount}/${album.totalCount} figuritas',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 11,
-                                                color: Colors.white.withValues(alpha: 0.85),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );

@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'services/push_service.dart';
 import 'services/user_session.dart';
 import 'theme/theme_provider.dart';
 import 'theme/app_theme.dart';
@@ -12,7 +13,12 @@ void main() async {
   try {
     await Firebase.initializeApp();
   } catch (_) {}
-  UserSession.instance.loadFromStorage();
+  await UserSession.instance.loadFromStorage();
+  if (UserSession.instance.isLoggedIn) {
+    PushService.instance.init().then((_) {
+      PushService.instance.registerWithBackend();
+    });
+  }
   runApp(
     MultiProvider(
       providers: [

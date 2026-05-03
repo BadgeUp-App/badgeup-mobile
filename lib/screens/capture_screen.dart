@@ -55,6 +55,14 @@ class _CaptureScreenState extends State<CaptureScreen>
         imageQuality: 85,
       );
     } catch (e) {
+      final msg = e.toString().toLowerCase();
+      final unavailable = msg.contains('camera not available') ||
+          msg.contains('no_camera') ||
+          msg.contains('not available');
+      if (source == ImageSource.camera && unavailable) {
+        _snack('Sin camara en este dispositivo, abriendo galeria');
+        return _pickAndScan(ImageSource.gallery);
+      }
       _snack('No se pudo abrir la camara: $e');
       return;
     }
