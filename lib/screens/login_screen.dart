@@ -26,7 +26,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || password.isEmpty) {
-      _showError('Ingresa correo y contrasena.');
+      _showError('Ingresa correo y contraseña.');
+      return;
+    }
+    if (!email.contains('@')) {
+      _showError('Por favor, ingresa un correo electrónico válido.'); 
       return;
     }
     setState(() => _loading = true);
@@ -192,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                               child: Text(
-                                'Olvidaste tu contrasena?',
+                                'Olvidaste tu contraseña?',
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
