@@ -381,6 +381,8 @@ class _TopBar extends StatelessWidget {
     final initial = (user?.displayName.isNotEmpty ?? false)
         ? user!.displayName[0].toUpperCase()
         : '?';
+    final hasAvatar =
+        user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty;
     return Row(
       children: [
         GestureDetector(
@@ -421,14 +423,45 @@ class _TopBar extends StatelessWidget {
               ),
               boxShadow: AppTheme.subtleLift,
             ),
-            child: Center(
-              child: Text(
-                initial,
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.onSurface,
-                ),
+            padding: const EdgeInsets.all(2),
+            child: ClipOval(
+              child: Container(
+                color: AppTheme.surfaceContainerLowest,
+                child: hasAvatar
+                    ? CachedNetworkImage(
+                        imageUrl: user!.avatarUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Center(
+                          child: Text(
+                            initial,
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        errorWidget: (_, __, ___) => Center(
+                          child: Text(
+                            initial,
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Text(
+                          initial,
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.onSurface,
+                          ),
+                        ),
+                      ),
               ),
             ),
           ),
