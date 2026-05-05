@@ -6,6 +6,7 @@ import '../services/user_session.dart';
 import '../theme/app_theme.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
+import 'main_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,7 +32,14 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
     try {
       await AuthService.instance.login(username: email, password: password);
-      // AuthGate will swap to MainShell once the session updates.
+      
+      // NUEVO CÓDIGO: Si todo salió bien, navegamos al MainShell
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainShell()),
+      );
+
     } on AuthException catch (e) {
       if (!mounted) return;
       _showError(e.message);
@@ -50,6 +58,14 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!UserSession.instance.isLoggedIn) {
         await UserSession.instance.refresh();
       }
+
+      // NUEVO CÓDIGO: Navegamos al MainShell tras el login con Google
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainShell()),
+      );
+
     } on AuthException catch (e) {
       if (!mounted) return;
       _showError(e.message);
