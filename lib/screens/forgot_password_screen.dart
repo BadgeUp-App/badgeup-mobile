@@ -22,10 +22,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Future<void> _sendCode() async {
     final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      _showSnack('Ingresa tu correo electronico.', isError: true);
-      return;
-    }
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, ingresa un correo electrónico válido.')),
+      );
+      return; 
+    }   
     setState(() => _loading = true);
     try {
       final msg = await AuthService.instance.requestPasswordReset(email);

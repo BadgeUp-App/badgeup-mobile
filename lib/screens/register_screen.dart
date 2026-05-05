@@ -40,7 +40,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final confirm = _confirmController.text;
 
     if (username.isEmpty || email.isEmpty || password.isEmpty) {
-      _showError('Completa usuario, correo y contrasena.');
+      _showError('Completa usuario, correo y contraseña.');
       return;
     }
     if (!email.contains('@')) {
@@ -48,11 +48,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
     if (password.length < 8) {
-      _showError('La contrasena debe tener al menos 8 caracteres.');
+      _showError('La contraseña debe tener al menos 8 caracteres.');
       return;
     }
     if (password != confirm) {
-      _showError('Las contrasenas no coinciden.');
+      _showError('Las contraseñas no coinciden.');
       return;
     }
 
@@ -73,7 +73,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _showError(e.message);
     } catch (_) {
       if (!mounted) return;
-      _showError('Error de conexion con el servidor.');
+      _showError('Error de conexión con el servidor.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -142,7 +142,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Une la cacería global de stickers.',
+                      'Unete a la cacería global de stickers.',
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         color: AppTheme.onSurfaceVariant,
@@ -191,7 +191,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 18),
                           _FormField(
-                            label: 'CONFIRMAR CONTRASENA',
+                            label: 'CONFIRMAR CONTRASEÑA',
                             controller: _confirmController,
                             hint: '........',
                             obscure: _obscureConfirm,
@@ -257,7 +257,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           children: [
                             TextSpan(
-                              text: 'Inicia sesion',
+                              text: 'Inicia sesión',
                               style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
