@@ -197,21 +197,21 @@ class AuthService {
   String _firebaseErrorToMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':
-        return 'El correo no es valido.';
+        return 'El correo no es válido.';
       case 'user-disabled':
         return 'La cuenta fue deshabilitada.';
       case 'user-not-found':
       case 'wrong-password':
       case 'invalid-credential':
-        return 'Correo o contrasena incorrectos.';
+        return 'Correo o contraseña incorrectos.';
       case 'email-already-in-use':
         return 'Ese correo ya tiene una cuenta.';
       case 'weak-password':
-        return 'La contrasena es demasiado debil (minimo 6 caracteres).';
+        return 'La contraseña es demasiado débil (mínimo 6 caracteres).';
       case 'network-request-failed':
-        return 'Sin conexion. Intenta de nuevo.';
+        return 'Sin conexión. Intenta de nuevo.';
       default:
-        return e.message ?? 'Error de autenticacion (${e.code}).';
+        return e.message ?? 'Error de autenticación (${e.code}).';
     }
   }
 
