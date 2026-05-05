@@ -6,6 +6,7 @@ class PreferencesService {
 
   static const _keySoundEnabled = 'pref_sound_enabled';
   static const _keyGpsEnabled = 'pref_gps_enabled';
+  static const _keyProfilePublic = 'pref_profile_public';
 
   Future<bool> get soundEnabled async {
     final prefs = await SharedPreferences.getInstance();
@@ -25,5 +26,15 @@ class PreferencesService {
   Future<void> setGpsEnabled(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyGpsEnabled, value);
+  }
+
+  Future<bool> get profilePublic async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyProfilePublic) ?? true;
+  }
+
+  Future<void> setProfilePublic(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyProfilePublic, value);
   }
 }

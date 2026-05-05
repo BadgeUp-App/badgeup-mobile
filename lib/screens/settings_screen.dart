@@ -5,6 +5,7 @@ import '../services/preferences_service.dart';
 import '../theme/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
+import '../services/api_client.dart';
 import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
 import 'login_screen.dart';
@@ -21,6 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _gpsEnabled = true;
   bool _soundEnabled = true;
+  bool _profilePublic = true;
   String _language = 'Espanol';
   @override
   void initState() {
@@ -32,10 +34,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final prefs = PreferencesService.instance;
     final sound = await prefs.soundEnabled;
     final gps = await prefs.gpsEnabled;
+    final pub = await prefs.profilePublic;
     if (!mounted) return;
     setState(() {
       _soundEnabled = sound;
       _gpsEnabled = gps;
+      _profilePublic = pub;
     });
   }
 
@@ -172,10 +176,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               context,
               icon: Icons.visibility_outlined,
               label: 'Perfil visible',
-              onTap: () => _infoDialog(
-                context,
-                'Visibilidad del perfil',
-                'Aqui se configurara la visibilidad del perfil para otros usuarios. Funcionalidad pendiente.',
+              trailing: Switch(
+                value: _profilePublic,
+                onChanged: (value) {
+                  setState(() => _profilePublic = value);
+                  PreferencesService.instance.setProfilePublic(value);
+                },
+                activeThumbColor: AppTheme.primaryContainer,
               ),
             ),
             const SizedBox(height: 24),
@@ -277,38 +284,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.delete_outline_rounded,
               label: 'Eliminar cuenta',
               isDestructive: true,
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    backgroundColor: AppTheme.surfaceContainerLowest,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28)),
-                    title: Text('Eliminar cuenta',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
-                    content: Text(
-                      'Se eliminara la cuenta de forma permanente. Esta accion no se puede deshacer. Funcionalidad pendiente.',
-                      style: GoogleFonts.inter(color: AppTheme.onSurfaceVariant),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text('Cancelar',
-                            style: GoogleFonts.inter(
-                                color: AppTheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w700)),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text('Eliminar',
-                            style: GoogleFonts.inter(
-                                color: AppTheme.error,
-                                fontWeight: FontWeight.w800)),
-                      ),
-                    ],
-                  ),
-                );
-              },
+              onTap: _confirmDeleteAccount,
             ),
             const SizedBox(height: 24),
             _sectionTitle('Informacion'),
@@ -324,16 +300,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   applicationLegalese: 'Colecciona stickers de carros en el mundo real.',
                 );
               },
-            ),
-            _settingsTile(
-              context,
-              icon: Icons.description_outlined,
-              label: 'Terminos y condiciones',
-              onTap: () => _infoDialog(
-                context,
-                'Terminos y condiciones',
-                'Se mostraran los terminos y condiciones del servicio. Funcionalidad pendiente.',
-              ),
             ),
             const SizedBox(height: 32),
             Center(
@@ -352,26 +318,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _infoDialog(BuildContext context, String title, String body) {
-    showDialog(
+  Future<void> _confirmDeleteAccount() async {
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surfaceContainerLowest,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: Text(title,
+        title: Text('Eliminar cuenta',
             style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
-        content: Text(body,
-            style: GoogleFonts.inter(color: AppTheme.onSurfaceVariant)),
+        content: Text(
+          'Tu cuenta y todas tus capturas se eliminaran de forma permanente. Esta accion no se puede deshacer.',
+          style: GoogleFonts.inter(color: AppTheme.onSurfaceVariant),
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Entendido',
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancelar',
                 style: GoogleFonts.inter(
-                    color: AppTheme.primary, fontWeight: FontWeight.w700)),
+                    color: AppTheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Eliminar',
+                style: GoogleFonts.inter(
+                    color: AppTheme.error, fontWeight: FontWeight.w800)),
           ),
         ],
       ),
     );
+    if (confirmed != true || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ApiClient.instance.delete('/auth/profile/');
+      await AuthService.instance.logout();
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (_) => false,
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('No se pudo eliminar la cuenta: $e'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      );
+    }
   }
 
   Widget _sectionTitle(String title) {
