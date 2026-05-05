@@ -328,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen> {
               (s) => s.isNotEmpty,
               orElse: () => 'Cazador',
             );
-    return 'Buenos dias, $first';
+    return 'Buenos días, $first';
   }
 
   String _weekday() {
