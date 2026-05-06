@@ -6,6 +6,7 @@ import '../theme/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 import '../services/api_client.dart';
+import '../services/chat_notifier.dart';
 import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
 import 'login_screen.dart';
@@ -298,6 +299,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   applicationName: 'BadgeUp',
                   applicationVersion: '1.0.0',
                   applicationLegalese: 'Colecciona stickers de carros en el mundo real.',
+                );
+              },
+            ),
+            _settingsTile(
+              context,
+              icon: Icons.notifications_active_outlined,
+              label: 'Probar notificacion',
+              onTap: () async {
+                await ChatNotifier.instance.testNotification();
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Notif disparada. Si no aparece revisa Configuracion > BadgeUp > Notificaciones'),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
                 );
               },
             ),

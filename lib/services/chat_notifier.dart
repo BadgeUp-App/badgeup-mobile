@@ -57,6 +57,15 @@ class ChatNotifier {
     _poll();
   }
 
+  Future<void> testNotification() async {
+    await _ensureInitialized();
+    await _show(
+      DateTime.now().millisecondsSinceEpoch.remainder(100000),
+      'Notificacion de prueba',
+      'Si ves esto es que las notifs locales jalan.',
+    );
+  }
+
   void stop() {
     _timer?.cancel();
     _timer = null;
@@ -92,18 +101,14 @@ class ChatNotifier {
         if (item is! Map) continue;
         final id = (item['id'] as num?)?.toInt() ?? 0;
         if (id <= _lastSeenId) continue;
-        final senderMap = item['sender'];
-        final senderId = senderMap is Map
-            ? (senderMap['id'] as num?)?.toInt()
-            : null;
+        final senderId = (item['sender_id'] as num?)?.toInt();
         if (_suppressed && senderId != null && senderId == _activeChatPeer) {
           continue;
         }
-        final senderName = senderMap is Map
-            ? (senderMap['username'] as String? ?? 'Mensaje')
-            : 'Mensaje';
+        final senderName = (item['sender_username'] as String?) ??
+            (senderId != null ? 'Usuario $senderId' : 'Nuevo mensaje');
         final text = (item['text'] as String?) ?? '';
-        await _show(id, senderName, text);
+        await _show(id, senderName, text.isEmpty ? 'Te envio un archivo' : text);
       }
       _lastSeenId = maxId;
     } catch (_) {}
