@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'services/chat_notifier.dart';
 import 'services/push_service.dart';
 import 'services/user_session.dart';
 import 'theme/theme_provider.dart';
@@ -18,6 +19,7 @@ void main() async {
     PushService.instance.init().then((_) {
       PushService.instance.registerWithBackend();
     });
+    ChatNotifier.instance.start();
   }
   runApp(
     MultiProvider(

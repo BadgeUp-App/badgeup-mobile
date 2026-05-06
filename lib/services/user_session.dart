@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/user_profile.dart';
 import 'api_client.dart';
+import 'chat_notifier.dart';
 import 'push_service.dart';
 import 'token_storage.dart';
 
@@ -21,6 +22,7 @@ class UserSession extends ChangeNotifier {
       PushService.instance.init().then((_) {
         PushService.instance.registerWithBackend();
       });
+      ChatNotifier.instance.start();
     }
     notifyListeners();
   }
@@ -54,6 +56,7 @@ class UserSession extends ChangeNotifier {
     try {
       await PushService.instance.unregister();
     } catch (_) {}
+    ChatNotifier.instance.stop();
     _user = null;
     await TokenStorage.clear();
     notifyListeners();

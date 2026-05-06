@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../models/friend_request.dart';
+import '../services/chat_notifier.dart';
 import '../services/social_api.dart';
 import '../services/user_session.dart';
 import '../theme/app_theme.dart';
@@ -39,6 +40,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     if (_otherId != null) {
+      ChatNotifier.instance.suppressFor(_otherId!);
       _loadMessages();
       _refreshTimer = Timer.periodic(
         const Duration(seconds: 2),
@@ -114,6 +116,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    ChatNotifier.instance.resume();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
