@@ -46,10 +46,20 @@ class PushService {
     );
 
     const initAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initIOS = DarwinInitializationSettings();
+    const initIOS = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
     await _local.initialize(
       const InitializationSettings(android: initAndroid, iOS: initIOS),
     );
+    if (Platform.isIOS) {
+      await _local
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
+    }
     await _local
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()

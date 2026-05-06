@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -17,6 +18,7 @@ class ChatNotifier {
   bool _suppressed = false;
   int? _activeChatPeer;
   bool _seeded = false;
+  bool _initialized = false;
 
   void suppressFor(int peerId) {
     _suppressed = true;
@@ -28,8 +30,29 @@ class ChatNotifier {
     _activeChatPeer = null;
   }
 
+  Future<void> _ensureInitialized() async {
+    if (_initialized) return;
+    const initAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const initIOS = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    await _local.initialize(
+      const InitializationSettings(android: initAndroid, iOS: initIOS),
+    );
+    if (Platform.isIOS) {
+      await _local
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
+    }
+    _initialized = true;
+  }
+
   Future<void> start() async {
     if (_timer != null) return;
+    await _ensureInitialized();
     _timer = Timer.periodic(const Duration(seconds: 4), (_) => _poll());
     _poll();
   }
