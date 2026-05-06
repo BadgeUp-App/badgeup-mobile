@@ -77,8 +77,15 @@ class ChatNotifier {
     if (await TokenStorage.access() == null) return;
     try {
       final query = _seeded ? '?since_id=$_lastSeenId' : '';
-      final data = await ApiClient.instance.get('/chat/inbox/recent/$query');
-      if (data is! List) return;
+      final raw = await ApiClient.instance.get('/chat/inbox/recent/$query');
+      List data;
+      if (raw is List) {
+        data = raw;
+      } else if (raw is Map && raw['results'] is List) {
+        data = raw['results'] as List;
+      } else {
+        return;
+      }
       if (data.isEmpty) {
         _seeded = true;
         return;
