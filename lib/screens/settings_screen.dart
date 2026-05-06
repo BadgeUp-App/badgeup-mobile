@@ -307,9 +307,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.notifications_active_outlined,
               label: 'Probar notificacion',
               onTap: () async {
+                final messenger = ScaffoldMessenger.of(context);
                 await ChatNotifier.instance.testNotification();
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(
                     content: const Text('Notif disparada. Si no aparece revisa Configuracion > BadgeUp > Notificaciones'),
                     behavior: SnackBarBehavior.floating,
