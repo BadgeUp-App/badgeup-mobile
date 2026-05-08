@@ -8,6 +8,7 @@ import '../models/capture_entry.dart';
 import '../models/sticker.dart';
 import '../models/user_profile.dart';
 import '../services/auth_service.dart';
+import '../services/chat_notifier.dart';
 import '../services/content_api.dart';
 import '../services/user_session.dart';
 import '../theme/app_theme.dart';
@@ -371,15 +372,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               MaterialPageRoute(builder: (_) => const CalendarScreen()),
                             ),
                           ),
-                          _QuickAction(
-                            icon: Icons.chat_rounded,
-                            label: 'Chat',
-                            bg: AppTheme.surfaceContainerHigh,
-                            iconColor: AppTheme.primary,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const ChatScreen()),
-                            ),
+                          ValueListenableBuilder<Map<int, int>>(
+                            valueListenable: ChatNotifier.instance.unreadBySender,
+                            builder: (_, map, __) {
+                              var total = 0;
+                              map.forEach((_, v) => total += v);
+                              return _QuickAction(
+                                icon: Icons.chat_rounded,
+                                label: 'Chat',
+                                bg: AppTheme.surfaceContainerHigh,
+                                iconColor: AppTheme.primary,
+                                badge: total,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const ChatScreen()),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -659,6 +668,7 @@ class _QuickAction extends StatelessWidget {
     required this.bg,
     required this.iconColor,
     required this.onTap,
+    this.badge = 0,
   });
 
   final IconData icon;
@@ -666,22 +676,55 @@ class _QuickAction extends StatelessWidget {
   final Color bg;
   final Color iconColor;
   final VoidCallback onTap;
+  final int badge;
 
   @override
   Widget build(BuildContext context) {
+    final box = Container(
+      width: 54,
+      height: 54,
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Icon(icon, color: iconColor, size: 22),
+    );
+    final iconNode = badge <= 0
+        ? box
+        : Stack(
+            clipBehavior: Clip.none,
+            children: [
+              box,
+              Positioned(
+                right: -4,
+                top: -4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                  decoration: BoxDecoration(
+                    color: AppTheme.error,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: AppTheme.surface, width: 2),
+                  ),
+                  child: Center(
+                    child: Text(
+                      badge > 9 ? '9+' : '$badge',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
     return GestureDetector(
       onTap: onTap,
       child: Column(
         children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(icon, color: iconColor, size: 22),
-          ),
+          iconNode,
           const SizedBox(height: 8),
           Text(
             label,

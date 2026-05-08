@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'api_client.dart';
@@ -13,6 +14,9 @@ class ChatNotifier {
   final FlutterLocalNotificationsPlugin _local =
       FlutterLocalNotificationsPlugin();
 
+  final ValueNotifier<Map<int, int>> unreadBySender =
+      ValueNotifier<Map<int, int>>(const {});
+
   Timer? _timer;
   int _lastSeenId = 0;
   bool _suppressed = false;
@@ -20,9 +24,31 @@ class ChatNotifier {
   bool _seeded = false;
   bool _initialized = false;
 
+  int totalUnread() {
+    var t = 0;
+    unreadBySender.value.forEach((_, v) => t += v);
+    return t;
+  }
+
+  int unreadFor(int senderId) => unreadBySender.value[senderId] ?? 0;
+
+  void clearUnreadFor(int senderId) {
+    final m = Map<int, int>.from(unreadBySender.value);
+    if (m.remove(senderId) != null) {
+      unreadBySender.value = m;
+    }
+  }
+
+  void _bumpUnread(int senderId) {
+    final m = Map<int, int>.from(unreadBySender.value);
+    m[senderId] = (m[senderId] ?? 0) + 1;
+    unreadBySender.value = m;
+  }
+
   void suppressFor(int peerId) {
     _suppressed = true;
     _activeChatPeer = peerId;
+    clearUnreadFor(peerId);
   }
 
   void resume() {
@@ -71,6 +97,7 @@ class ChatNotifier {
     _timer = null;
     _lastSeenId = 0;
     _seeded = false;
+    unreadBySender.value = const {};
   }
 
   Future<void> _poll() async {
@@ -111,6 +138,9 @@ class ChatNotifier {
         final senderId = (item['sender_id'] as num?)?.toInt();
         if (_suppressed && senderId != null && senderId == _activeChatPeer) {
           continue;
+        }
+        if (senderId != null) {
+          _bumpUnread(senderId);
         }
         final senderName = (item['sender_username'] as String?) ??
             (senderId != null ? 'Usuario $senderId' : 'Nuevo mensaje');

@@ -34,7 +34,6 @@ class _AlbumsScreenState extends State<AlbumsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isAdmin = UserSession.instance.user?.isStaff == true; 
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: Stack(

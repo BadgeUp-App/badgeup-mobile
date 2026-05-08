@@ -24,7 +24,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _gpsEnabled = true;
   bool _soundEnabled = true;
   bool _profilePublic = true;
-  String _language = 'Espanol';
   bool _isThemeLocked = false;
   @override
   void initState() {

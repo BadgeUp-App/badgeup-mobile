@@ -1,7 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../models/friend_request.dart';
+import '../services/chat_notifier.dart';
 import '../services/social_api.dart';
 import '../theme/app_theme.dart';
 import 'chat_screen.dart';
@@ -460,7 +462,7 @@ class _FriendsScreenState extends State<FriendsScreen>
       ),
       child: Row(
         children: [
-          _avatar(r.toUser.displayName),
+          _avatar(r.toUser.displayName, avatarUrl: r.toUser.avatarUrl),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -513,7 +515,11 @@ class _FriendsScreenState extends State<FriendsScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _avatar(m.displayName),
+                _avatar(
+                  m.displayName,
+                  avatarUrl: m.avatarUrl,
+                  peerId: m.isFriend ? m.id : null,
+                ),
                 const SizedBox(width: 14),
               ],
             ),
@@ -580,7 +586,7 @@ class _FriendsScreenState extends State<FriendsScreen>
       ),
       child: Row(
         children: [
-          _avatar(r.fromUser.displayName),
+          _avatar(r.fromUser.displayName, avatarUrl: r.fromUser.avatarUrl),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -611,8 +617,19 @@ class _FriendsScreenState extends State<FriendsScreen>
     );
   }
 
-  Widget _avatar(String name) {
-    return Container(
+  Widget _avatar(String name, {String? avatarUrl, int? peerId}) {
+    final initial = Center(
+      child: Text(
+        name.isNotEmpty ? name[0].toUpperCase() : '?',
+        style: GoogleFonts.inter(
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+          color: AppTheme.onSurface,
+        ),
+      ),
+    );
+    final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
+    final base = Container(
       width: 46,
       height: 46,
       decoration: const BoxDecoration(
@@ -623,16 +640,57 @@ class _FriendsScreenState extends State<FriendsScreen>
           end: Alignment.bottomRight,
         ),
       ),
-      child: Center(
-        child: Text(
-          name.isNotEmpty ? name[0].toUpperCase() : '?',
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            color: AppTheme.onSurface,
-          ),
-        ),
+      child: ClipOval(
+        child: hasAvatar
+            ? CachedNetworkImage(
+                imageUrl: avatarUrl,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => initial,
+                errorWidget: (_, __, ___) => initial,
+              )
+            : initial,
       ),
+    );
+    if (peerId == null) return base;
+    return ValueListenableBuilder<Map<int, int>>(
+      valueListenable: ChatNotifier.instance.unreadBySender,
+      builder: (_, map, __) {
+        final unread = map[peerId] ?? 0;
+        if (unread <= 0) return base;
+        return SizedBox(
+          width: 46,
+          height: 46,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              base,
+              Positioned(
+                right: -2,
+                top: -2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  decoration: BoxDecoration(
+                    color: AppTheme.error,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: AppTheme.surface, width: 2),
+                  ),
+                  child: Center(
+                    child: Text(
+                      unread > 9 ? '9+' : '$unread',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
