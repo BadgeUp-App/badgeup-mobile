@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_provider.dart';
+import '../services/user_session.dart'; // <-- 1. Recuperamos la sesión
 import 'home_screen.dart';
 import 'albums_screen.dart';
 import 'capture_screen.dart';
@@ -83,6 +84,9 @@ class _FloatingNavTray extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 2. Recuperamos la lógica para ocultarle cosas al Admin
+    final isAdmin = UserSession.instance.user?.isStaff == true; 
+
     final items = <_NavItem>[
       _NavItem(icon: Icons.home_rounded, label: 'Inicio'),
       _NavItem(icon: Icons.collections_bookmark_rounded, label: 'Album'),
@@ -111,7 +115,9 @@ class _FloatingNavTray extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 for (int i = 0; i < items.length; i++)
-                  if (i == 2)
+                  if (isAdmin && (i == 2 || i == 3)) // 3. Ocultamos Mapa y Captura al Admin
+                    const SizedBox.shrink()
+                  else if (i == 2)
                     _CenterCaptureTile(
                       item: items[i],
                       onTap: () => onTap(i),
@@ -153,39 +159,43 @@ class _NavTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
+      // 4. EL TRUCO DE ORO: Separamos la animación usando AnimatedPadding
+      child: AnimatedPadding(
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
         padding: EdgeInsets.symmetric(
           horizontal: selected ? 16 : 12,
           vertical: 10,
         ),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppTheme.primaryContainer.withValues(alpha: 0.12)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              item.icon,
-              size: 22,
-              color: selected ? AppTheme.primary : AppTheme.outline,
-            ),
-            if (selected) ...[
-              const SizedBox(width: 6),
-              Text(
-                item.label,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.primary,
-                ),
+        // Ahora el Container cambia de color instantáneamente sin animación de por medio
+        child: Container(
+          decoration: BoxDecoration(
+            color: selected
+                ? AppTheme.primaryContainer.withValues(alpha: 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                item.icon,
+                size: 22,
+                color: selected ? AppTheme.primary : AppTheme.outline,
               ),
+              if (selected) ...[
+                const SizedBox(width: 6),
+                Text(
+                  item.label,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primary,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

@@ -34,6 +34,7 @@ class _AlbumsScreenState extends State<AlbumsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = UserSession.instance.user?.isStaff == true; 
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: Stack(
@@ -346,12 +347,16 @@ class _AlbumsScreenState extends State<AlbumsScreen> {
   }
 }
 
+
 class _AlbumListCard extends StatelessWidget {
   final Album album;
   const _AlbumListCard({required this.album});
 
   @override
   Widget build(BuildContext context) {
+    // Aquí es donde debe ir la validación del Admin para cada tarjeta
+    final isAdmin = UserSession.instance.user?.isStaff == true; 
+
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
@@ -437,43 +442,46 @@ class _AlbumListCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '${album.unlockedCount}',
+                        isAdmin ? '${album.totalCount} stickers' : '${album.unlockedCount}',
                         style: GoogleFonts.inter(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.primary,
                         ),
                       ),
-                      Text(
-                        ' / ${album.totalCount}',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.onSurfaceVariant,
+                      if (!isAdmin) // Si NO es admin, le mostramos el " / 10"
+                        Text(
+                          ' / ${album.totalCount}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Container(
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: album.progress.clamp(0.0, 1.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppTheme.tertiary, AppTheme.tertiaryContainer],
+                  if (!isAdmin) ...[ // Si NO es admin, le dibujamos la barra de progreso
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: FractionallySizedBox(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: album.progress.clamp(0.0, 1.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [AppTheme.tertiary, AppTheme.tertiaryContainer],
+                            ),
+                            borderRadius: BorderRadius.circular(999),
                           ),
-                          borderRadius: BorderRadius.circular(999),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

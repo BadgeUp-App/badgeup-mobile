@@ -120,10 +120,10 @@ class _CaptureScreenState extends State<CaptureScreen>
 
   void _showSingleResult(MatchPhotoResult r) {
     String title;
-    if (r.alreadyUnlocked && r.photoAdded) {
-      title = 'Foto agregada';
+    if (r.alreadyUnlocked) {
+      title = '¡Sticker repetido!';
     } else if (r.unlocked) {
-      title = 'Sticker desbloqueado';
+      title = '¡Nuevo sticker desbloqueado!';
     } else {
       title = 'Sin match';
     }
@@ -211,10 +211,21 @@ class _CaptureScreenState extends State<CaptureScreen>
               },
               child: Text('Escribir nota', style: GoogleFonts.inter(color: AppTheme.secondary, fontWeight: FontWeight.w700)),
             ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cerrar', style: GoogleFonts.inter(color: AppTheme.primary, fontWeight: FontWeight.w700)),
-          ),
+          if (r.unlocked)
+            TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: AppTheme.pastelPeach,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: Text('Guardar en álbum', style: GoogleFonts.inter(color: AppTheme.onPastelPeach, fontWeight: FontWeight.w800)),
+            )
+          else
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cerrar', style: GoogleFonts.inter(color: AppTheme.primary, fontWeight: FontWeight.w700)),
+            ),
         ],
       ),
     );

@@ -35,6 +35,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<true/>
 	<key>GIDClientID</key>
 	<string>890350684806-fqs7foin6ch0c8dff1d3u0uab3k6iaks.apps.googleusercontent.com</string>
 	<key>LSRequiresIPhoneOS</key>
@@ -48,8 +50,6 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>BadgeUp necesita acceso a tus fotos para que puedas elegir una imagen de perfil o subir capturas de tus stickers.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<key>FirebaseAppDelegateProxyEnabled</key>
 	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
