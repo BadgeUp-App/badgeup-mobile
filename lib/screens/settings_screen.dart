@@ -25,6 +25,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _soundEnabled = true;
   bool _profilePublic = true;
   String _language = 'Espanol';
+  bool _isThemeLocked = false;
   @override
   void initState() {
     super.initState();
@@ -100,36 +101,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
               label: 'Modo oscuro',
               trailing: Switch(
                 value: themeProvider.isDark,
-                onChanged: (value) => themeProvider.toggleTheme(value),
                 activeThumbColor: AppTheme.primaryContainer,
-              ),
-            ),
-            _settingsTile(
-              context,
-              icon: Icons.language_rounded,
-              label: 'Idioma',
-              trailing: DropdownButton<String>(
-                value: _language,
-                underline: const SizedBox(),
-                style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AppTheme.onSurface,
-                    fontWeight: FontWeight.w600),
-                items: ['Espanol', 'English'].map((l) {
-                  return DropdownMenuItem(value: l, child: Text(l));
-                }).toList(),
                 onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _language = value);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Idioma cambiado a $value'),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                      ),
-                    );
-                  }
+                  // 1. Si el candado está puesto (por un clic rapidísimo), IGNORAMOS el toque
+                  if (_isThemeLocked) return; 
+
+                  _isThemeLocked = true; 
+                  
+                  themeProvider.toggleTheme(value);
+                  
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    if (mounted) {
+                      setState(() {
+                        _isThemeLocked = false;
+                      });
+                    }
+                  });
                 },
               ),
             ),
