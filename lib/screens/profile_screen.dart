@@ -51,6 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserSession>().user;
+    final isAdmin = user?.isStaff == true;
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -336,65 +337,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         },
                       ),
                     ),
-                    const SizedBox(height: 28),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _QuickAction(
-                            icon: Icons.people_rounded,
-                            label: 'Amigos',
-                            bg: AppTheme.secondaryContainer,
-                            iconColor: AppTheme.secondary,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const FriendsScreen()),
+                    if (!isAdmin) ...[
+                      const SizedBox(height: 28),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _QuickAction(
+                              icon: Icons.people_rounded,
+                              label: 'Amigos',
+                              bg: AppTheme.secondaryContainer,
+                              iconColor: AppTheme.secondary,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const FriendsScreen()),
+                              ),
                             ),
-                          ),
-                          _QuickAction(
-                            icon: Icons.emoji_events_rounded,
-                            label: 'Ranking',
-                            bg: AppTheme.tertiaryContainer,
-                            iconColor: AppTheme.tertiary,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const RankingScreen()),
+                            _QuickAction(
+                              icon: Icons.emoji_events_rounded,
+                              label: 'Ranking',
+                              bg: AppTheme.tertiaryContainer,
+                              iconColor: AppTheme.tertiary,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const RankingScreen()),
+                              ),
                             ),
-                          ),
-                          _QuickAction(
-                            icon: Icons.calendar_today_rounded,
-                            label: 'Agenda',
-                            bg: AppTheme.pastelPeach,
-                            iconColor: AppTheme.onPastelPeach,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const CalendarScreen()),
+                            _QuickAction(
+                              icon: Icons.calendar_today_rounded,
+                              label: 'Agenda',
+                              bg: AppTheme.pastelPeach,
+                              iconColor: AppTheme.onPastelPeach,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const CalendarScreen()),
+                              ),
                             ),
-                          ),
-                          ValueListenableBuilder<Map<int, int>>(
-                            valueListenable: ChatNotifier.instance.unreadBySender,
-                            builder: (_, map, __) {
-                              var total = 0;
-                              map.forEach((_, v) => total += v);
-                              return _QuickAction(
-                                icon: Icons.chat_rounded,
-                                label: 'Chat',
-                                bg: AppTheme.surfaceContainerHigh,
-                                iconColor: AppTheme.primary,
-                                badge: total,
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => const ChatScreen()),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
+                            ValueListenableBuilder<Map<int, int>>(
+                              valueListenable: ChatNotifier.instance.unreadBySender,
+                              builder: (_, map, __) {
+                                var total = 0;
+                                map.forEach((_, v) => total += v);
+                                return _QuickAction(
+                                  icon: Icons.chat_rounded,
+                                  label: 'Chat',
+                                  bg: AppTheme.surfaceContainerHigh,
+                                  iconColor: AppTheme.primary,
+                                  badge: total,
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const ChatScreen()),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 28),
-                    _MapPreview(locationsFuture: _locationsFuture),
+                      const SizedBox(height: 28),
+                      _MapPreview(locationsFuture: _locationsFuture),
+                    ],
                     const SizedBox(height: 30),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
