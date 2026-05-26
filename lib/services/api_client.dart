@@ -24,7 +24,7 @@ class ApiClient {
 
   http.Client get _client => debugClient ?? http.Client();
 
-  Future<void>? _refreshing;
+  Future<bool>? _refreshing;
 
   Future<Map<String, String>> _jsonHeaders() async {
     final token = await TokenStorage.access();
@@ -44,16 +44,16 @@ class ApiClient {
   }
 
   Future<bool> _refreshAccessToken() async {
-    // Avoid parallel refresh attempts.
-    if (_refreshing != null) {
-      await _refreshing;
-      return true;
-    }
-    final completer = Completer<void>();
+    final inflight = _refreshing;
+    if (inflight != null) return inflight;
+    final completer = Completer<bool>();
     _refreshing = completer.future;
     try {
       final refresh = await TokenStorage.refresh();
-      if (refresh == null || refresh.isEmpty) return false;
+      if (refresh == null || refresh.isEmpty) {
+        completer.complete(false);
+        return false;
+      }
       final uri = Uri.parse('${ApiConfig.baseUrl}/auth/token/refresh/');
       final resp = await _client
           .post(
@@ -65,21 +65,28 @@ class ApiClient {
             body: jsonEncode({'refresh': refresh}),
           )
           .timeout(ApiConfig.timeout);
-      if (resp.statusCode != 200) return false;
+      if (resp.statusCode != 200) {
+        completer.complete(false);
+        return false;
+      }
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
       final newAccess = data['access']?.toString();
-      if (newAccess == null || newAccess.isEmpty) return false;
+      if (newAccess == null || newAccess.isEmpty) {
+        completer.complete(false);
+        return false;
+      }
       final newRefresh = data['refresh']?.toString() ?? refresh;
       await TokenStorage.save(
         access: newAccess,
         refresh: newRefresh,
         user: await TokenStorage.user(),
       );
+      completer.complete(true);
       return true;
     } catch (_) {
+      if (!completer.isCompleted) completer.complete(false);
       return false;
     } finally {
-      completer.complete();
       _refreshing = null;
     }
   }

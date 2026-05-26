@@ -7,5 +7,6 @@ class ApiConfig {
     return _prodUrl;
   }
 
-  static const Duration timeout = Duration(seconds: 30);
+  static const Duration timeout = Duration(seconds: 90);
+  static const Duration coldStartHint = Duration(seconds: 8);
 }

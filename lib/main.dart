@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'services/api_config.dart';
 import 'services/chat_notifier.dart';
 import 'services/push_service.dart';
 import 'services/user_session.dart';
@@ -14,6 +16,7 @@ void main() async {
   try {
     await Firebase.initializeApp();
   } catch (_) {}
+  _warmupBackend();
   await UserSession.instance.loadFromStorage();
   if (UserSession.instance.isLoggedIn) {
     PushService.instance.init().then((_) {
@@ -30,6 +33,15 @@ void main() async {
       child: const BadgeUpApp(),
     ),
   );
+}
+
+void _warmupBackend() {
+  final uri = Uri.parse('${ApiConfig.baseUrl}/auth/leaderboard/?limit=1');
+  http
+      .get(uri)
+      .timeout(const Duration(seconds: 90))
+      .then((_) {})
+      .catchError((_) {});
 }
 
 class BadgeUpApp extends StatelessWidget {
