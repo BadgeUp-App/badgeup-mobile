@@ -15,10 +15,12 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     await TokenStorage.save(access: 'acc', refresh: 'ref');
+    ContentApi.instance.clearCache();
   });
 
   tearDown(() {
     ApiClient.debugClient = null;
+    ContentApi.instance.clearCache();
   });
 
   group('ContentApi.fetchAlbums', () {
