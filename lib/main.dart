@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -10,29 +11,37 @@ import 'theme/theme_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_shell.dart';
+import 'services/aroa_errors.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await Firebase.initializeApp();
-  } catch (_) {}
-  _warmupBackend();
-  await UserSession.instance.loadFromStorage();
-  if (UserSession.instance.isLoggedIn) {
-    PushService.instance.init().then((_) {
-      PushService.instance.registerWithBackend();
-    });
-    ChatNotifier.instance.start();
-  }
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider<UserSession>.value(value: UserSession.instance),
-      ],
-      child: const BadgeUpApp(),
-    ),
-  );
+void main() {
+  AroaErrors.guard(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    AroaErrors.init(
+      ingestKey: const String.fromEnvironment('AROA_ERRORS_KEY'),
+      release: const String.fromEnvironment('APP_VERSION', defaultValue: 'dev'),
+      environment: kReleaseMode ? 'prod' : 'dev',
+    );
+    try {
+      await Firebase.initializeApp();
+    } catch (_) {}
+    _warmupBackend();
+    await UserSession.instance.loadFromStorage();
+    if (UserSession.instance.isLoggedIn) {
+      PushService.instance.init().then((_) {
+        PushService.instance.registerWithBackend();
+      });
+      ChatNotifier.instance.start();
+    }
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider<UserSession>.value(value: UserSession.instance),
+        ],
+        child: const BadgeUpApp(),
+      ),
+    );
+  });
 }
 
 void _warmupBackend() {
